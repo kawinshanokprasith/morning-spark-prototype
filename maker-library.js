@@ -212,18 +212,18 @@ function libClick(e, t){
   }
   if (d.m==='libreplaceok'){
     if (!m.up){ toast('กรุณาอัปโหลดรูปภาพใหม่'); return true; }
-    LIB.imgs[m.key] = {...LIB.imgs[m.key], src:m.up.src, name:m.up.name, source:m.up.source, updated:`${TODAY} ${clock()}`, ts:100 + Date.now()/1e13};
+    LIB.imgs[m.key] = {...LIB.imgs[m.key], src:m.up.src, name:m.up.name, source:m.up.source, sdate:TODAY, updated:`${TODAY} ${clock()}`, ts:100 + Date.now()/1e13};
     libNotify(m.notify);
     libDone(m.notify.length ? ['แจ้งเตือนผู้อ่านสำเร็จ', 'แก้ไขรูปภาพสำเร็จ'] : ['แก้ไขรูปภาพสำเร็จ']); return true;
   }
   if (d.m==='libcancelok'){
     let uses;
     if (m.kind==='docCancel'){
-      ARTICLES.forEach(a => a.groups.forEach(g => g.docs.forEach(x => { if (x.name===m.name) x.cancelled = true; })));
+      ARTICLES.forEach(a => a.groups.forEach(g => g.docs.forEach(x => { if (x.name===m.name) Object.assign(x, {cancelled:true, status:'ยกเลิก', sdate:TODAY}); })));
       LIB.docs[m.name] = {...LIB.docs[m.name], cancelled:true, ts:100 + Date.now()/1e13};
       uses = docIndex().find(x => x.name===m.name).uses;
     } else {
-      LIB.imgs[m.key] = {...LIB.imgs[m.key], cancelled:true, ts:100 + Date.now()/1e13};
+      LIB.imgs[m.key] = {...LIB.imgs[m.key], cancelled:true, sdate:TODAY, ts:100 + Date.now()/1e13};
       uses = imgIndex().find(x => x.key===m.key).uses;
     }
     const ids = m.notifyAll ? uses.filter(r => r.mstatus==='published').map(r => r.id) : [];

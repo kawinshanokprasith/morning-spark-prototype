@@ -8,7 +8,12 @@ const GROUP_LOCKED = 'กลุ่มทำกับงานกฎเกณฑ�
 const GROUPS = ['สาขา: บริหารภาพรวม', 'สาขา: สินเชื่อ', 'สาขา: บริการลูกค้า/ การขาย', 'สาขา: บริการลูกค้า', 'สำนักงานเขต: บริหารภาพรวม', 'Branch Call Center'];
 // Document types and image sources follow the Iteration 2 filter lists in Figma
 const DOC_TYPES = ['ระเบียบ', 'คู่มือ', 'นโยบาย', 'นว.', 'คำสั่ง ธ.', 'ฟอร์ม', 'คู่มือการขาย (Sales Sheet)', 'อื่นๆ'];
-const DOC_STATUS = ['ใหม่', 'อัปเดต', 'ยกเลิก', 'เหมือนเดิม'];
+// สถานะ for documents, detail rows and images; อัปเดต / ยกเลิก are stamped with the save date, คงเดิม keeps the previous state
+const DOC_STATUS = ['คงเดิม (Default)', 'อัปเดต', 'ยกเลิก'];
+const KEEP = 'คงเดิม (Default)';
+const prevOf = o => o && (o.status==='อัปเดต' || o.status==='ยกเลิก') && o.sdate ? {status:o.status, sdate:o.sdate} : null;
+const resolveSt = (st, prev) => st==='อัปเดต' || st==='ยกเลิก' ? {status:st, sdate:TODAY} : prev ? {...prev} : {};
+const prevHint = p => p ? `<small class="prevst">ล่าสุด: ${p.status} ${p.sdate}</small>` : '';
 const IMG_SOURCES = ['CLMG POST', 'เรื่องเด่นเรื่องเด็ด', 'สรุปสั้นทันใจ', 'NRR พารู้', 'อื่นๆ'];
 const STATUS_LABEL = {published:'เผยแพร่แล้ว', scheduled:'กำหนดเผยแพร่', draft:'ฉบับร่าง', expired:'หมดอายุ', recalled:'ยกเลิกใช้'};
 const UPLOAD_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="#1a1e28" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18a4.5 4.5 0 01-.6-8.96A6 6 0 0118 9a4 4 0 01-1 7.9"/><path d="M12 12v9m0-9l-3 3m3-3l3 3"/></svg>`;
@@ -194,8 +199,8 @@ function formFromRow(r){
     groups:[GROUP_LOCKED, 'สาขา: บริหารภาพรวม', 'สาขา: บริการลูกค้า'], pubMode:r.sched?'custom':'next', pubDate:r.sched||''});
   if (a){
     f.summary = a.summary; f.contacts = a.contacts.map(c=>({...c}));
-    f.sections = a.groups.map(g => ({title:g.group, open:true, docs:g.docs.map(d => ({status:'เหมือนเดิม', dtype:guessType(d.name), url:docUrl(d.name), name:d.name, open:true, rows:(d.rows||[]).map(x=>({...x}))}))}));
-    f.uploads = (a.images||[]).map((src,i) => ({name: i ? `${a.igName.replace(/\.\w+$/,'')} (${i+1}).jpg` : a.igName, src: src.includes('/')?src:A+src, status:'เหมือนเดิม', source:'เรื่องเด่นเรื่องเด็ด', updated:'26/06/2569'}));
+    f.sections = a.groups.map(g => ({title:g.group, open:true, docs:g.docs.map(d => ({status:KEEP, prev:prevOf(d.cancelled ? {status:'ยกเลิก', sdate:d.sdate} : d), dtype:guessType(d.name), url:docUrl(d.name), name:d.name, open:true, rows:(d.rows||[]).map(x=>({ref:x.ref, detail:x.detail, note:x.note, status:KEEP, prev:prevOf(x)}))}))}));
+    f.uploads = (a.images||[]).map((src,i) => ({name: i ? `${a.igName.replace(/\.\w+$/,'')} (${i+1}).jpg` : a.igName, src: src.includes('/')?src:A+src, status:KEEP, prev:prevOf(a.imgStat?.[i]), source: i ? 'NRR พารู้' : 'เรื่องเด่นเรื่องเด็ด', updated:'26/06/2569'}));
   } else f.contacts = [{unit:'ฝ่าย Non-Retail Banking and Internal Regulations', tel:'02-208-3877'}];
   return f;
 }
@@ -286,12 +291,13 @@ function vSummaryTab(f){
       <div class="sb">${s.docs.map((d,j)=>{ const D=`${P}.docs.${j}`; return `<div class="dblk${d.open?'':' closed'}" data-di="${j}">
           <div class="drow"><span></span>${L('สถานะเอกสาร',1)}${L('ประเภทเอกสาร',1)}${L('Intranet URL',1,'วางลิงก์เอกสารจาก Intranet แล้วกดไอคอนค้นหาเพื่อดึงชื่อเอกสาร')}${L('ชื่อเอกสาร',1,'ระบบดึงชื่อเอกสารจาก Intranet ให้อัตโนมัติ')}<span></span><span></span></div>
           <div class="drow" style="margin-top:-6px">${GRIP}
-            ${fld(D+'.status', fsel(D+'.status', DOC_STATUS))}${fld(D+'.dtype', fsel(D+'.dtype', DOC_TYPES))}
+            ${fld(D+'.status', fsel(D+'.status', DOC_STATUS) + prevHint(d.prev))}${fld(D+'.dtype', fsel(D+'.dtype', DOC_TYPES))}
             ${fld(D+'.url', `<div class="urlbox">${inp(D+'.url','https://intranet.krungthai/...')}<button type="button" data-fetch="${D}" data-tip="ดึงชื่อเอกสาร"><img src="${A}icon-search.svg" alt=""></button></div>`)}
             ${fld(D+'.name', inp(D+'.name','ชื่อเอกสาร','disabled'))}
             <button class="tbtn" data-rmdoc="${i}:${j}" ${s.docs.length<2?'disabled':''} data-tip="ลบเอกสาร"><img src="${MA}trash.svg" alt=""></button>
             <button class="acc" data-togdoc="${i}:${j}"><img src="${A}icon-chevron-up.svg" alt=""></button></div>
           <div class="dets">${d.rows.map((r,k)=>`<div class="det" data-ri="${k}">${GRIP}
+              <div class="dst">${fsel(`${D}.rows.${k}.status`, DOC_STATUS, 'สถานะ')}${prevHint(r.prev)}</div>
               <input class="fin" data-f="${D}.rows.${k}.ref" value="${esc(r.ref)}" placeholder="อ้างอิง เช่น หน้า 12 | หมวด 1 | ข้อ 1.3">
               <input class="fin" data-f="${D}.rows.${k}.detail" value="${esc(r.detail)}" placeholder="รายละเอียด / สาระสำคัญ">
               <input class="fin" data-f="${D}.rows.${k}.note" value="${esc(r.note)}" placeholder="สิ่งที่เปลี่ยนแปลง (ถ้ามี)">
@@ -310,7 +316,7 @@ function vImagesTab(f){
     <div style="color:var(--gray-fg-mid)">จำนวนไฟล์ ${f.uploads.length} รายการ</div>
     <div class="utbl"><div class="ur thd"><span></span><span>สถานะรูปภาพ <i style="color:var(--error-fg-high);font-style:normal">*</i></span><span>แหล่งที่มา <i style="color:var(--error-fg-high);font-style:normal">*</i></span><span>ชื่อไฟล์</span><span>อัปเดตล่าสุด</span><span>การจัดการ</span></div>
       ${f.uploads.length ? f.uploads.map((u,i)=>`<div class="ur"><img class="thumb" src="${u.src}" alt="">
-        ${fsel(`uploads.${i}.status`, DOC_STATUS.slice(0,3).concat('เหมือนเดิม'), 'เลือก')}
+        <div class="dst">${fsel(`uploads.${i}.status`, DOC_STATUS, 'เลือก')}${prevHint(u.prev)}</div>
         ${fld(`uploads.${i}.source`, fsel(`uploads.${i}.source`, IMG_SOURCES, 'เลือกแหล่งที่มา'))}
         <span class="fn" title="${esc(u.name)}">${esc(u.name)}</span><span>${u.updated}</span>
         <button class="tbtn" data-rmup="${i}" data-tip="ลบ"><img src="${MA}trash.svg" alt=""></button></div>`).join('')
@@ -346,13 +352,13 @@ const confirmBox = (t, p, ok, act, danger) => `<div class="m-mod"><h3><span>${t}
 const repDate = (k, off) => `<div class="dt${off?' off':''}"><input class="txt" data-rd="${k}" value="${esc(M.modal[k]||'')}" placeholder="วว/ดด/ปปปป" ${off?'disabled':''}><button type="button" data-pickr="${k}" ${off?'disabled':''}><img src="${MA}calendar.svg" alt=""></button></div>`;
 
 function toArticle(f, base){
-  const kept = f.uploads.filter(u => u.status!=='ยกเลิก'), imgs = kept.map(u => u.src);
+  const imgs = f.uploads.map(u => u.src);
   return {id: base?.id ?? Math.max(...ARTICLES.map(a=>a.id))+1, imp: base?.imp||false, read:false, type:f.type,
     status: base?.status||null, cancel: base?.cancel, date: (base?'อัปเดต ':'ประกาศ ') + (base?TODAY:pubDateOf(f)),
     eff: 'เริ่มใช้ ' + f.start + (f.end?' - '+f.end:''), title:f.title.trim(), ex:f.summary.slice(0,180), summary:f.summary,
-    groups: f.sections.map(s => ({group:s.title, docs:s.docs.map(d => ({name:d.name||d.url, status:d.status, rows: d.rows.length ? d.rows.map(r=>({ref:r.ref||'-', detail:r.detail||'-', note:r.note||'-'})) : undefined}))})),
+    groups: f.sections.map(s => ({group:s.title, docs:s.docs.map(d => ({name:d.name||d.url, ...resolveSt(d.status, d.prev), rows: d.rows.length ? d.rows.map(r=>({ref:r.ref||'-', detail:r.detail||'-', note:r.note||'-', ...resolveSt(r.status, r.prev)})) : undefined}))})),
     contacts: f.contacts.map(c=>({...c})), igName: f.uploads[0]?.name || base?.igName || '',
-    images: imgs.length ? imgs : undefined, imgTags: imgs.length ? kept.map(u => u.status) : undefined, posters: imgs.length ? undefined : (base?.posters||[])};
+    images: imgs.length ? imgs : undefined, imgStat: imgs.length ? f.uploads.map(u => resolveSt(u.status, u.prev)) : undefined, posters: imgs.length ? undefined : (base?.posters||[])};
 }
 function vPreview(){
   const p = M.prev; if (!p) return '';
@@ -447,7 +453,7 @@ function mClick(e){
   if (d.rmdoc){ const [i,j] = ix(d.rmdoc); f.sections[i].docs.splice(j,1); return changed(); }
   if (d.togdoc){ const [i,j] = ix(d.togdoc); const x = f.sections[i].docs[j]; x.open = !x.open; return rerender(); }
   if (d.mvdoc){ const [i,j,dir] = ix(d.mvdoc); const s = f.sections[i].docs; [s[j], s[j+dir]] = [s[j+dir], s[j]]; return changed(); }
-  if (d.addrow){ const [i,j] = ix(d.addrow); f.sections[i].docs[j].rows.push({ref:'', detail:'', note:''}); return changed(); }
+  if (d.addrow){ const [i,j] = ix(d.addrow); f.sections[i].docs[j].rows.push({ref:'', detail:'', note:'', status:KEEP}); return changed(); }
   if (d.rmrow){ const [i,j,k] = ix(d.rmrow); f.sections[i].docs[j].rows.splice(k,1); return changed(); }
   if (d.fetch){ const doc = getP(f, d.fetch); if (!/^https?:\/\/[^\s]*intranet/i.test(doc.url)) { f.showErr = true; return rerender(); }
     const seg = decodeURIComponent(doc.url.split(/[/?#]/).filter(Boolean).pop() || '');
@@ -470,7 +476,7 @@ function mClick(e){
   }
   if (d.m==='dosaveedit'){
     const row = MK.rows.find(x=>x.id===f.rowId), a = art(row), n = toArticle(f, a), notify = M.modal.notify;
-    if (a) Object.assign(a, n, notify ? {read:false, status: a.status==='cancel'?'cancel':'update'} : {read:a.read, date:a.date});
+    if (a) Object.assign(a, n, notify ? {read:false, status: a.status==='cancel'?'cancel':'update', _seen:{}} : {read:a.read, date:a.date});
     else { ARTICLES.unshift(n); row.aid = n.id; }
     touch(row); M.modal = null; M.view = 'list'; M.form = null; mRender(); refreshReceiver();
     return toast(notify ? 'บันทึกแล้ว และแจ้งเตือนผู้รับเรียบร้อย' : 'บันทึกแล้ว (ไม่แจ้งเตือนผู้รับ)');
@@ -496,7 +502,7 @@ function addUploads(list){
   list.slice(0, room).forEach(u => {
     if (u.name.length > 80) return toast(`ชื่อไฟล์ “${u.name.slice(0,20)}…” ยาวเกิน 80 ตัวอักษร`);
     const source = IMG_SOURCES.find(s => u.name.includes(s.split(' ')[0])) || '';
-    f.uploads.push({name:u.name, src:u.src, status:'ใหม่', source, updated:TODAY});
+    f.uploads.push({name:u.name, src:u.src, status:f.rowId ? 'อัปเดต' : KEEP, source, updated:TODAY});
   });
   f.dirty = true; f.savedAt = clock(); rerender();
 }

@@ -386,3 +386,7 @@ mark{background:none;color:var(--secondary-bg-mid);font-weight:700}
 .lib-name .ocr{display:block}
 .lib-info>span{min-width:0;max-width:100%;display:flex;align-items:baseline;white-space:nowrap}
 .lib-info .ulink{overflow:hidden;text-overflow:ellipsis;min-width:0}
+.det{grid-template-columns:20px 150px 180px 1fr 1fr 32px!important}
+.det .sel{height:36px}.det .sel select{font-size:13px;padding-right:28px}
+.dst{display:flex;flex-direction:column;gap:2px;min-width:0}
+.prevst{font-size:10.5px;line-height:14px;color:var(--gray-fg-mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}

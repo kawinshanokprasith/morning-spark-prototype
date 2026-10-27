@@ -198,3 +198,24 @@ const ARTICLES = [
     {title:'สินเชื่อกู้บ้าน', sub:'สำหรับบุคคลธรรมดา', points:['ซื้อบ้านใหม่ มือสอง หรือรีไฟแนนซ์','ผ่อนนานสูงสุด 40 ปี','ดอกเบี้ยพิเศษคงที่ 3 ปีแรก','LTV ตามเกณฑ์ ธปท.']},
     {title:'ก่อนลงนามสัญญา', sub:'สิ่งที่ต้องตรวจ', points:['อายุผู้กู้รวมระยะผ่อนไม่เกิน 70 ปี','เอกสารหลักประกันครบถ้วน','ยืนยันตัวตนด้วยการสแกนใบหน้า']}]},
 ];
+
+// Change / cancel history (Figma Iteration 2 › Receiver › Article Details change/cancel cases).
+// Each document, detail row and image can carry {status:'อัปเดต'|'ยกเลิก', sdate}. The newest date in an
+// article is shown prominently (pill + tinted row); older ones are de-emphasised ([อัปเดต: date]).
+(() => {
+  const A = id => ARTICLES.find(a => a.id===id), st = (status, sdate) => ({status, sdate});
+  const fatca = A(2), g = fatca.groups;
+  Object.assign(g[0].docs[0].rows[0], st('อัปเดต', '08/09/2569'));
+  Object.assign(g[0].docs[0].rows[1], st('อัปเดต', '25/08/2569'));
+  Object.assign(g[0].docs[1], st('อัปเดต', '08/09/2569'));
+  Object.assign(g[0].docs[2], st('ยกเลิก', '25/08/2569'));
+  Object.assign(g[0].docs[3], st('อัปเดต', '25/08/2569'));
+  Object.assign(g[1].docs[0], st('ยกเลิก', '08/09/2569'));
+  fatca.imgStat = [{}, st('อัปเดต', '08/09/2569'), st('ยกเลิก', '08/09/2569'), {}, {}, {}];
+  const ktc = A(1).groups[0].docs[0].rows;
+  Object.assign(ktc[0], st('ยกเลิก', '08/09/2569'));
+  Object.assign(ktc[1], st('อัปเดต', '08/09/2569'));
+  Object.assign(A(5).groups[0].docs[0].rows[0], st('อัปเดต', '08/09/2569'));
+  // the prototype's "today" is 09/09/2569, so recent history sits the day before
+  [1, 2, 5].forEach(id => { A(id).date = 'อัปเดต 08/09/2569'; });
+})();

@@ -6,7 +6,7 @@
 <title>Morning Spark Prototype</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;700&display=swap" rel="stylesheet">
-<link href="maker.css" rel="stylesheet">
+<link href="maker.css?v=202610270930" rel="stylesheet">
 <style>
 /* Tokens from the Morning Spark Figma file */
 :root{
@@ -141,6 +141,31 @@ img{display:block}
 .badge.update{background:var(--secondary-bg-mid);color:#fff}
 .badge.cancel{background:var(--red-bg-high);color:#fff}
 .badge.new{background:var(--primary-bg-mid);color:#fff}
+/* change / cancel states */
+.pill{display:inline-flex;padding:0 8px;border-radius:10px;font-size:11px;line-height:18px;font-weight:700;white-space:nowrap}
+.pill.up{background:var(--secondary-bg-mid);color:#fff}
+.pill.cx{background:#c3c8d3;color:var(--gray-fg-high)}
+.old{font-size:11px;color:var(--gray-fg-mid);white-space:nowrap}
+.doc .rf{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.doc .rf b{display:inline}
+.doc .r.up-l>div{background:var(--secondary-bg-lowest)}
+.doc .r.cx-l>div{background:var(--gray-bg-midgray)}
+.doc .r.cx-o>div{background:var(--gray-bg-light)}
+.doc .lk{flex:1;display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
+.doc .lk .link{flex:none}
+.doc .fi{position:relative;display:block;width:24px;height:32px;flex-shrink:0}
+.doc .fi img{width:24px;height:32px}
+.doc .fi .fb{position:absolute;left:5px;top:13px;width:14px;height:14px}
+.doc.dcx .dh{background:var(--gray-bg-midgray)}
+.doc.dcx .fi img{filter:grayscale(1) opacity(.55)}
+.doc.dcx .link span{color:var(--gray-fg-mid);border-color:var(--gray-fg-low)}
+.cdot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--error-fg-high);margin-left:8px}
+.ig-bar .n{flex-wrap:wrap}
+.th{position:relative}
+.th .tpill{position:absolute;left:-4px;top:-6px;z-index:2;padding:0 7px;border-radius:9px;font-size:10px;line-height:16px;font-weight:700}
+.th .tpill.up{background:var(--secondary-bg-mid);color:#fff}
+.th .tpill.cx{background:#c3c8d3;color:var(--gray-fg-high)}
+.th.dim .im img,.th.dim .im .poster,.ig .main.dim>*:not(.pg){filter:grayscale(1);opacity:.55}
 .doc .dh .badge{flex-shrink:0}
 .th .tg{display:flex;gap:4px;align-items:center}
 .th .tg .badge{padding:0 6px;font-size:10px;line-height:15px;border-radius:8px}
@@ -483,7 +508,7 @@ input[type=checkbox]:focus-visible,input[type=radio]:focus-visible{outline:2px s
 
 <div id="toast"></div>
 
-<script src="data.js"></script>
+<script src="data.js?v=202610270930"></script>
 <script>
 const A = 'assets/';
 const TYPE = {product:{label:'ผลิตภัณฑ์', icon:'icon-tag-blue.svg', wicon:'w-icon-tag.svg'}, practice:{label:'ข้อปฏิบัติ', icon:'icon-newspaper-blue.svg', wicon:'w-icon-newspaper.svg'}};
@@ -849,36 +874,57 @@ function poster(p, a){
     <ol class="p-pts">${p.points.map(t=>`<li>${esc(t)}</li>`).join('')}</ol>
     <div class="p-foot"><b>${a.eff}</b>${esc(c.unit)} โทร ${esc(c.tel)}</div></div>`;
 }
-// Document status from the Maker form (สถานะเอกสาร): ใหม่ / อัปเดต / ยกเลิก; "เหมือนเดิม" shows no tag
-const docTag = d => d.cancelled || d.status==='ยกเลิก' ? '<span class="badge cancel">ยกเลิกใช้</span>'
-  : d.status==='อัปเดต' ? '<span class="badge update">อัปเดต</span>' : d.status==='ใหม่' ? '<span class="badge new">ใหม่</span>' : '';
-const imgTag = t => t==='อัปเดต' ? '<span class="badge update">อัปเดต</span>' : t==='ใหม่' ? '<span class="badge new">ใหม่</span>' : '';
+// Change / cancel states (Figma Iteration 2 › Article Details change/cancel spec):
+// the newest dated change in an article is "prominent" (pill + tinted row), older ones are "secondary" ([status: date]).
+const beNum = t => { const m = /(\d{2})\/(\d{2})\/(\d{4})/.exec(t||''); return m ? +m[3]*10000 + +m[2]*100 + +m[1] : 0; };
+const docSt = d => d.cancelled && d.status!=='ยกเลิก' ? {status:'ยกเลิก', sdate:d.sdate} : d;
+const isSt = o => o && (o.status==='อัปเดต' || o.status==='ยกเลิก') && o.sdate;
+function latestChange(a){
+  let mx = 0; const see = o => { if (isSt(o)) mx = Math.max(mx, beNum(o.sdate)); };
+  a.groups.forEach(g => g.docs.forEach(d => { see(docSt(d)); (d.rows||[]).forEach(see); }));
+  (a.imgStat||[]).forEach(see); return mx;
+}
+const stTag = (o, L) => !isSt(o) ? '' : beNum(o.sdate)===L
+  ? `<span class="pill ${o.status==='ยกเลิก'?'cx':'up'}">${o.status}: ${o.sdate}</span>` : `<span class="old">[${o.status}: ${o.sdate}]</span>`;
+const rowCls = (o, L) => !isSt(o) ? '' : o.status==='อัปเดต' ? (beNum(o.sdate)===L ? ' up-l' : '') : beNum(o.sdate)===L ? ' cx-l' : ' cx-o';
+const FILE_BADGE = {
+  star:'<svg class="fb" viewBox="0 0 12 12"><path d="M6 1.2l1.4 2.9 3.2.4-2.3 2.2.6 3.2L6 8.4 3.1 9.9l.6-3.2L1.4 4.5l3.2-.4z" fill="#fff"/></svg>',
+  ban:'<svg class="fb" viewBox="0 0 12 12"><circle cx="6" cy="6" r="3.6" fill="none" stroke="#fff" stroke-width="1.3"/><path d="M3.6 8.4l4.8-4.8" stroke="#fff" stroke-width="1.3"/></svg>'};
+function tabHasChange(a, tab, L){
+  if (tab==='summary') return a.groups.some(g => g.docs.some(d => (isSt(docSt(d)) && beNum(docSt(d).sdate)===L) || (d.rows||[]).some(r => isSt(r) && beNum(r.sdate)===L)));
+  return (a.imgStat||[]).some(o => isSt(o) && beNum(o.sdate)===L);
+}
 function vDetail(){
   const a = state.article;
-  const tab = (k,icon,label) => `<button class="tab${state.tab===k?' on':''}" data-tab="${k}"><img src="${A}${icon}" alt="">${label}</button>`;
+  const L = latestChange(a); a._seen = a._seen || {};
+  const tab = (k,icon,label) => `<button class="tab${state.tab===k?' on':''}" data-tab="${k}"><img src="${A}${icon}" alt="">${label}${tabHasChange(a,k,L) && !a._seen[k] ? '<span class="cdot" aria-label="มีการเปลี่ยนแปลง"></span>' : ''}</button>`;
+  setTimeout(() => { a._seen[state.tab] = true; }, 0);
   let body;
   if (state.tab==='summary'){
     body = `<div class="box"><div class="t"><img src="${A}icon-pin.svg" alt="">สรุปประกาศ</div><p>${esc(a.summary)}</p></div>
       ${a.groups.map(g=>`<div class="group"><div class="gh">${esc(g.group)}</div>
-        ${g.docs.map(d=>`<div class="doc"><div class="dh"><img src="${A}file-graphic.svg" alt="">
-            <button class="link" data-doc="${esc(d.name)}"><span>${esc(d.name)}</span></button>${docTag(d)}
+        ${g.docs.map(d=>{ const ds = docSt(d), cx = isSt(ds) && ds.status==='ยกเลิก', up = isSt(ds) && ds.status==='อัปเดต';
+          return `<div class="doc${cx?' dcx':''}"><div class="dh"><span class="fi"><img src="${A}file-graphic.svg" alt="">${cx?FILE_BADGE.ban:up?FILE_BADGE.star:''}</span>
+            <span class="lk"><button class="link" data-doc="${esc(d.name)}"><span>${esc(d.name)}</span></button>${stTag(ds, L)}</span>
             ${d.rows?`<button class="acc" aria-label="ย่อ/ขยาย"><img src="${A}icon-chevron-up.svg" alt=""></button>`:''}</div>
-          ${d.rows?`<div class="rows">${d.rows.map(r=>`<div class="r"><div class="c"><b>${esc(r.ref)}</b>${esc(r.detail)}</div><div class="s">${esc(r.note)}</div></div>`).join('')}</div>`:''}
-        </div>`).join('')}</div>`).join('')}
+          ${d.rows?`<div class="rows">${d.rows.map(r=>`<div class="r${cx?'':rowCls(r,L)}"><div class="c"><div class="rf"><b>${esc(r.ref)}</b>${cx?'':stTag(r,L)}</div>${esc(r.detail)}</div><div class="s">${esc(r.note)}</div></div>`).join('')}</div>`:''}
+        </div>`; }).join('')}</div>`).join('')}
       <div class="box contact"><div class="t"><img src="${A}icon-phone.svg" alt="">สอบถามข้อมูลเพิ่มเติม</div>
         <ul>${a.contacts.map(c=>`<li>${esc(c.unit)}<span>${esc(c.tel)}</span></li>`).join('')}</ul></div>`;
   } else {
     // Maker can replace or cancel an infographic (maker-library.js); cancelled ones are hidden here
     const ov = typeof LIB!=='undefined' ? LIB.imgs : {};
     const items = (a.images ? a.images.map(f=>({img:f})) : (a.posters||[]).map(p=>({p})))
-      .map((x,k) => { const o = ov[a.id+':'+k]; return o?.cancelled ? null : {...(o?.src ? {img:o.src} : x), tag: o?.src ? 'อัปเดต' : a.imgTags?.[k]}; }).filter(Boolean);
+      .map((x,k) => { const o = ov[a.id+':'+k] || {}; const base = o.src ? {img:o.src} : x;
+        const stt = o.cancelled ? {status:'ยกเลิก', sdate:o.sdate} : o.src ? {status:'อัปเดต', sdate:o.sdate} : (a.imgStat?.[k] || {});
+        return {...base, st:stt, name: o.name || (k ? `${a.igName.replace(/\.\w+$/,'')} (${k+1}).jpg` : a.igName)}; });
     const i = state.img, it = items[i];
     const view = x => x.img ? `<img src="${x.img.includes('/')?x.img:A+x.img}" alt="">` : poster(x.p, a);
-    body = !items.length ? `<div class="empty">ประกาศนี้ไม่มีข้อมูลรูปภาพ</div>` : `<div><div class="ig-bar"><div class="n"><img src="${A}icon-photo-tab.svg" alt="">${esc(a.igName)}</div>
+    body = !items.length ? `<div class="empty">ประกาศนี้ไม่มีข้อมูลรูปภาพ</div>` : `<div><div class="ig-bar"><div class="n"><img src="${A}icon-photo-tab.svg" alt="">${esc(it.name)}${stTag(it.st, L)}</div>
         <button class="btn-sec" id="dl-all">${DL_ICON}ดาวน์โหลดทั้งหมด</button></div>
-      <div class="ig"><div class="main">${view(it)}<span class="pg">${i+1}/${items.length}</span></div>
+      <div class="ig"><div class="main${it.st.status==='ยกเลิก'?' dim':''}">${view(it)}<span class="pg">${i+1}/${items.length}</span></div>
         <div class="thumbs"><button class="nav" data-img="prev" ${i===0?'disabled':''}><img src="${A}icon-chevron-left.svg" alt=""></button>
-          <div class="list">${items.map((x,k)=>`<button class="th${k===i?' on':''}" data-img="${k}"><span class="im">${view(x)}<span class="dl" data-dl="${k}">${DL_ICON}</span></span><span class="tg">${imgTag(x.tag)}อัปเดตล่าสุด: ${a.date.split(' ')[1]}</span></button>`).join('')}</div>
+          <div class="list">${items.map((x,k)=>`<button class="th${k===i?' on':''}${x.st.status==='ยกเลิก'?' dim':''}" data-img="${k}" data-tip="${esc(x.name)}">${isSt(x.st)?`<span class="tpill ${x.st.status==='ยกเลิก'?'cx':'up'}">${x.st.status}</span>`:''}<span class="im">${view(x)}<span class="dl" data-dl="${k}">${DL_ICON}</span></span><span class="tg">อัปเดตล่าสุด: ${a.date.split(' ')[1]}</span></button>`).join('')}</div>
           <button class="nav" data-img="next" ${i===items.length-1?'disabled':''}><img src="${A}icon-chevron-right-sm.svg" alt=""></button></div>
       </div></div>`;
   }
@@ -1035,7 +1081,7 @@ renderDesktop();
 makeDraggable(widget(), $('.w-head'));
 renderWidget(); updateTaskbar();
 </script>
-<script src="maker.js"></script>
-<script src="maker-library.js"></script>
+<script src="maker.js?v=202610270930"></script>
+<script src="maker-library.js?v=202610270930"></script>
 </body>
 </html>
