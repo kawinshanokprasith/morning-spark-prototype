@@ -1,0 +1,1025 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Morning Spark Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="maker.css" rel="stylesheet">
+<style>
+/* Tokens from the Morning Spark Figma file */
+:root{
+  --primary-bg-high:#1e87cb; --primary-bg-mid:#359fe1; --primary-bg-low:#d4ecfb; --primary-bg-lowest:#eef7fd;
+  --primary-border-high:#7cc0ef; --primary-border-low:#d4ecfb;
+  --primary-fg-highest:#156dab; --primary-fg-high:#1e87cb; --primary-fg-mid:#359fe1;
+  --secondary-bg-mid:#f89350; --secondary-bg-lowest:#fef7f0; --secondary-border-low:#fdebd8; --secondary-fg-highest:#bc6220;
+  --red-bg-high:#a1081a; --error-fg-high:#c84341;
+  --gray-fg-high:#1a1e28; --gray-fg-mid-on-gray:#424e59; --gray-fg-mid:#62707e; --gray-fg-low:#8990a2;
+  --gray-border-light:#c9cdd8; --gray-border-divider:#e1e4ec; --gray-bg-light:#f7f8fb; --gray-bg-midgray:#e1e4ec;
+  --shadow-4:0 1px 2px rgba(27,29,31,.08),0 8px 24px rgba(27,29,31,.12);
+  --shadow-1:0 0 2px rgba(27,29,31,.02),0 1px 2px rgba(27,29,31,.04);
+  --shadow-win:0 2px 6px rgba(0,0,0,.14),0 24px 60px rgba(0,0,0,.32);
+  --font:"Krungthai Fast","Noto Sans Thai",system-ui,sans-serif;
+  --os-font:"Segoe UI Variable","Segoe UI","Noto Sans Thai",system-ui,sans-serif;
+  /* UI scale: Figma sizes x this factor */
+  --ui:1.12;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--font);color:var(--gray-fg-high);background:#0b2a6b;overflow:hidden;font-size:14px;line-height:20px;user-select:none}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+input,select{font:inherit;color:inherit;user-select:text}
+img{display:block}
+.hidden{display:none!important}
+
+/* ---------- Windows 11 desktop ---------- */
+#desktop{position:fixed;inset:0;overflow:hidden;
+  background:radial-gradient(ellipse 70% 60% at 55% 58%,#bfe3ff 0%,#5aa9f5 22%,#1f67d6 45%,#0c3a9a 68%,#071c54 100%)}
+#bloom{position:absolute;left:50%;top:56%;width:1500px;height:1500px;transform:translate(-50%,-50%);pointer-events:none;filter:blur(.5px)}
+.icons{position:absolute;left:8px;top:8px;bottom:56px;display:grid;grid-auto-flow:column;grid-template-rows:repeat(auto-fill,100px);grid-auto-columns:88px;gap:2px;z-index:1}
+.d-icon{width:88px;height:96px;border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:4px;padding:6px 4px;color:#fff;font:12px/16px var(--os-font);text-align:center;text-shadow:0 1px 3px rgba(0,0,0,.6);border:1px solid transparent}
+.d-icon svg,.d-icon .ms{width:48px;height:48px;flex-shrink:0}
+.d-icon .lbl{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.d-icon:hover{background:rgba(255,255,255,.12)}
+.d-icon.sel{background:rgba(255,255,255,.22);border-color:rgba(255,255,255,.35)}
+.ms{position:relative;border-radius:50%;background:var(--primary-bg-high);display:grid;place-items:center;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.ms img{width:60%;height:auto;aspect-ratio:18/7.875;margin-bottom:6%}
+.ms .dot{position:absolute;top:-3px;right:-5px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--error-fg-high);color:#fff;font:700 11px/18px var(--os-font);text-shadow:none}
+.taskbar{position:absolute;left:0;right:0;bottom:0;height:48px;background:rgba(243,243,243,.85);backdrop-filter:blur(30px) saturate(1.6);border-top:1px solid rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;gap:4px;z-index:9000;font-family:var(--os-font)}
+.tb{position:relative;width:40px;height:40px;border-radius:4px;display:grid;place-items:center}
+.tb svg,.tb .ms{width:26px;height:26px}
+.tb .ms .dot{min-width:14px;height:14px;font-size:9px;line-height:14px;top:-4px;right:-6px;padding:0 3px}
+.tb:hover{background:rgba(255,255,255,.7)}
+.tb.open::after{content:"";position:absolute;bottom:2px;left:50%;width:6px;height:3px;border-radius:2px;background:#8a8a8a;transform:translateX(-50%)}
+.tb.active{background:rgba(255,255,255,.75)}
+.tb.active::after{width:16px;background:#005fb8}
+.tb-search{height:34px;width:200px;border-radius:17px;background:#fff;border:1px solid #e5e5e5;display:flex;align-items:center;gap:8px;padding:0 12px;color:#666;font-size:13px;margin:0 4px}
+.tray{position:absolute;right:8px;display:flex;align-items:center;gap:6px;font-size:12px;line-height:16px;color:#1a1a1a}
+.tray .clock{text-align:right;padding:0 8px}
+.tray svg{width:16px;height:16px}
+.weather{position:absolute;left:12px;display:flex;align-items:center;gap:8px;font-size:12px;line-height:15px;color:#1a1a1a}
+.weather b{display:block;font-weight:600}
+.hint{position:absolute;right:16px;top:16px;width:300px;background:rgba(32,32,32,.78);backdrop-filter:blur(20px);color:#fff;border-radius:8px;padding:12px 36px 12px 14px;font:13px/19px var(--font);z-index:1;box-shadow:var(--shadow-4)}
+.hint b{color:#ffd29e}
+.hint button{position:absolute;right:8px;top:8px;width:20px;height:20px;color:#fff;opacity:.7}
+
+/* ---------- Generic OS windows ---------- */
+.win{position:absolute;display:flex;flex-direction:column;overflow:hidden;border-radius:8px;box-shadow:var(--shadow-win);background:#fff}
+.win.max{left:0!important;top:0!important;width:100vw!important;height:calc(100vh - 48px)!important;border-radius:0}
+.drag{cursor:default;touch-action:none}
+.rz{position:absolute;z-index:40;touch-action:none}
+.rz-n,.rz-s{left:10px;right:10px;height:6px;cursor:ns-resize}
+.rz-n{top:0}.rz-s{bottom:0}
+.rz-e,.rz-w{top:10px;bottom:10px;width:6px;cursor:ew-resize}
+.rz-e{right:0}.rz-w{left:0}
+.rz-ne,.rz-nw,.rz-se,.rz-sw{width:12px;height:12px}
+.rz-ne{top:0;right:0;cursor:nesw-resize}.rz-sw{bottom:0;left:0;cursor:nesw-resize}
+.rz-nw{top:0;left:0;cursor:nwse-resize}.rz-se{bottom:0;right:0;cursor:nwse-resize}
+.win.max .rz{display:none}
+.os-win{width:760px;height:480px;font-family:var(--os-font);border:1px solid rgba(0,0,0,.12)}
+.os-head{height:40px;flex-shrink:0;background:#f3f3f3;display:flex;align-items:center;justify-content:space-between;padding-left:12px;font-size:12px}
+.os-head .t{display:flex;align-items:center;gap:8px}
+.os-head .t svg{width:16px;height:16px}
+.os-ctl{display:flex;height:100%}
+.os-ctl button{width:46px;height:100%;display:grid;place-items:center}
+.os-ctl button:hover{background:rgba(0,0,0,.06)}
+.os-ctl button.x:hover{background:#c42b1c;color:#fff}
+.os-ctl svg{width:10px;height:10px}
+.os-body{flex:1;display:flex;min-height:0}
+.os-side{width:180px;background:#f9f9f9;border-right:1px solid #eee;padding:10px 6px;font-size:13px;line-height:30px}
+.os-side div{padding:0 10px;border-radius:4px;display:flex;align-items:center;gap:8px}
+.os-side div.on{background:#e9eef6}
+.os-side svg{width:16px;height:16px}
+.os-main{flex:1;padding:12px 16px;overflow:auto;font-size:13px}
+.os-main .crumb{color:#555;margin-bottom:10px}
+.os-row{display:grid;grid-template-columns:1fr 140px 90px;gap:8px;padding:6px 8px;border-radius:4px;align-items:center}
+.os-row:hover{background:#f0f4fa}
+.os-row.h{color:#666;font-size:12px}
+.os-row.h:hover{background:none}
+.os-row span:first-child{display:flex;align-items:center;gap:8px}
+.os-row svg{width:18px;height:18px;flex-shrink:0}
+.os-app{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:#555;font-size:14px;background:#fafafa}
+.os-app svg{width:72px;height:72px}
+
+/* ---------- Widget ---------- */
+.widget{position:absolute;right:20px;bottom:68px;z-index:2;border-radius:8px;box-shadow:var(--shadow-win)}
+.widget.front{box-shadow:0 0 0 2px rgba(53,159,225,.45),var(--shadow-win)}
+.w-inner{zoom:var(--ui);width:340px;border:1px solid var(--primary-border-low);border-radius:8px;overflow:hidden;background:#fff}
+.w-head{background:var(--primary-bg-high);display:flex;align-items:center;justify-content:space-between;padding:6px 10px;color:#fff;font-size:12px;line-height:18px;font-weight:700}
+.w-head .brand{display:flex;align-items:center;gap:8px}
+.w-head .brand img{width:18px;height:8px}
+.w-head button{width:22px;height:22px;display:grid;place-items:center;border-radius:4px}
+.w-head button:hover{background:rgba(255,255,255,.2)}
+.w-sum{position:relative;background:var(--primary-bg-low);padding:10px 12px;overflow:hidden}
+.w-sum .t{display:flex;align-items:center;gap:6px;font-size:18px;line-height:26px;font-weight:700}
+.count{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:var(--primary-fg-highest);color:#fff;font-size:12px;line-height:22px;font-weight:700}
+.w-sum .u{font-size:11px;line-height:16px;font-weight:500;color:var(--gray-fg-mid);margin-top:2px}
+.w-sum .deco{position:absolute;right:0;bottom:-6px;width:29px;height:29px}
+.w-body{padding:12px;display:flex;flex-direction:column;gap:12px}
+.w-list{max-height:250px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding-right:2px}
+.w-list::-webkit-scrollbar{width:6px}.w-list::-webkit-scrollbar-thumb{background:var(--gray-bg-midgray);border-radius:8px}
+.w-card{text-align:left;border:1px solid var(--primary-border-low);background:#fff;border-radius:6px;padding:10px;display:flex;flex-direction:column;gap:8px;flex-shrink:0}
+.w-card.imp{background:var(--secondary-bg-lowest);border-color:var(--secondary-border-low)}
+.w-card:hover{border-color:var(--primary-border-high)}
+.w-card .title{font-size:14px;line-height:21px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.w-empty{color:var(--gray-fg-mid);text-align:center;padding:28px 0;font-size:14px}
+.widget.collapsed .w-sum,.widget.collapsed .w-body{display:none}
+.btn-primary{background:var(--primary-bg-mid);color:#fff;font-weight:700;border-radius:8px;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-primary:hover{background:var(--primary-bg-high)}
+.w-body .btn-primary{height:36px;border-radius:6px;font-size:13px;line-height:18px;gap:4px}
+.w-body .btn-primary img{width:16px;height:16px}
+
+/* badges */
+.badges{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:11px;font-size:12px;line-height:18px;font-weight:700;white-space:nowrap}
+.badge img{width:14px;height:14px}
+.badge.type{background:#fff;border:1px solid var(--primary-border-high);color:var(--primary-fg-highest);padding:1px 7px}
+.badge.update{background:var(--secondary-bg-mid);color:#fff}
+.badge.cancel{background:var(--red-bg-high);color:#fff}
+.badges.sm .badge{padding:1px 5px;border-radius:8px;font-size:10px;line-height:14px;gap:2px}
+.badges.sm .badge.type{padding:0 4px}
+.badges.sm .badge img{width:12px;height:12px}
+
+/* ---------- Morning Spark app window ---------- */
+#app{width:min(1200px,calc(100vw - 80px));height:min(860px,calc(100vh - 96px))}
+.app-head{flex-shrink:0;background:var(--primary-bg-high);display:flex;align-items:center;justify-content:space-between;padding:8px 16px;color:#fff;zoom:var(--ui)}
+.app-head .brand{display:flex;align-items:center;gap:8px;font-size:18px;line-height:26px;font-weight:700}
+.app-head .logo{width:32px;height:32px;display:flex;align-items:center;justify-content:center;padding-bottom:4px}
+.app-head .logo img{width:32px;height:14px}
+.app-head .ctl{display:flex;gap:12px}
+.app-head .ctl button,.app-head .back{width:28px;height:28px;display:grid;place-items:center;border-radius:4px}
+.app-head .ctl button:hover,.app-head .back:hover{background:rgba(255,255,255,.18)}
+.app-head .ctl img,.app-head .back img{width:24px;height:24px}
+.app-body{flex:1;overflow-y:auto;position:relative}
+.app-body::-webkit-scrollbar{width:8px}.app-body::-webkit-scrollbar-thumb{background:var(--gray-bg-midgray);border-radius:8px}
+.screen{zoom:var(--ui);min-height:100%}
+
+/* ---------- Login ---------- */
+.login{position:relative;background:var(--primary-border-high);overflow:hidden;display:grid;place-items:center;padding:40px 0 120px}
+.login .d1{position:absolute;left:18%;top:72px;width:184px}
+.login .d2{position:absolute;right:-30px;bottom:-60px;width:294px;transform:rotate(20.93deg)}
+.login .ktb{position:absolute;left:50%;bottom:40px;transform:translateX(-50%);height:44px}
+.modal{position:relative;width:500px;height:502px}
+.modal .bg{position:absolute;inset:0;width:100%;height:100%}
+.modal .inner{position:relative;padding:40px 32px 56px;display:flex;flex-direction:column;align-items:center;gap:24px}
+.m-logo{display:flex;align-items:center;gap:8px;font-size:21px;line-height:30px;font-weight:700}
+.m-logo span{width:32px;height:32px;display:flex;align-items:center;justify-content:center;padding-bottom:4px}
+.m-logo img{width:32px;height:14px}
+.m-desc{text-align:center}
+.m-desc h2{font-size:21px;line-height:30px}
+.m-desc p{font-size:16px;line-height:24px;color:var(--gray-fg-mid)}
+.form{width:100%;display:flex;flex-direction:column;gap:16px}
+.field label{display:block;font-size:14px;line-height:20px;font-weight:700;margin-bottom:8px}
+.field label i{font-style:normal;color:var(--error-fg-high);font-size:21px;vertical-align:-4px}
+.input{height:48px;border:1px solid var(--gray-border-light);border-radius:8px;background:#fff;display:flex;align-items:center;gap:8px;padding:12px}
+.input:focus-within{border-color:var(--primary-bg-mid);box-shadow:0 0 0 3px var(--primary-bg-lowest)}
+.input input{flex:1;border:0;outline:0;font-size:16px;line-height:24px;min-width:0;background:transparent}
+.input input::placeholder{color:var(--gray-fg-mid)}
+.input img{width:24px;height:24px}
+.input button{display:grid;place-items:center}
+.field.err .input{border-color:var(--error-fg-high)}
+.field .msg{display:none;color:var(--error-fg-high);font-size:12px;line-height:18px;margin-top:4px}
+.field.err .msg{display:block}
+.form .btn-primary{height:48px;font-size:16px;line-height:24px}
+.form .btn-primary img{width:20px;height:20px}
+.version{display:flex;align-items:center;gap:4px;font-size:10px;line-height:14px;font-weight:500;color:var(--gray-fg-low)}
+.version img{width:4px;height:4px}
+
+/* ---------- Homefeed ---------- */
+.feed{position:relative;background:#fff}
+.feed .hbg{position:absolute;left:0;top:0;width:100%;height:180px}
+.feed-content{position:relative;width:min(844px,calc(100% - 48px));margin:0 auto;padding:64px 0 80px;display:flex;flex-direction:column;gap:32px}
+.search{background:#fff;border:1px solid var(--primary-border-high);border-radius:12px;padding:24px;display:flex;flex-direction:column;align-items:center;gap:16px}
+.search h1{font-size:28px;line-height:36px}
+.search .row{display:flex;gap:12px;width:100%}
+.search .row .input{flex:1}
+.search .row .btn-primary{min-width:120px;height:48px;font-size:16px;line-height:24px}
+.filters{display:flex;justify-content:space-between;align-items:center;width:100%;gap:8px;flex-wrap:wrap}
+.chips{display:flex;gap:8px}
+.chip{display:flex;align-items:center;gap:4px;padding:4px 8px;border-radius:16px;border:.5px solid var(--gray-border-divider);background:#fff;color:var(--gray-fg-mid);font-size:16px;line-height:24px}
+.chip img{width:20px;height:20px;margin:2px}
+.chip.on{background:var(--primary-bg-lowest);border-color:var(--primary-border-low);color:var(--primary-fg-high);font-weight:700}
+.dropdowns{display:flex;gap:8px;align-items:center}
+.select{position:relative;height:40px;border:1px solid var(--gray-border-light);border-radius:8px;background:#fff;display:flex;align-items:center}
+.select select{appearance:none;border:0;outline:0;background:transparent;height:100%;padding:0 40px 0 12px;font-size:14px;line-height:20px;cursor:pointer}
+.select img{position:absolute;right:12px;width:20px;height:20px;pointer-events:none;transform:rotate(180deg)}
+.ghost{min-width:100px;padding:10px 12px;border-radius:8px;font-weight:700;font-size:14px;line-height:20px}
+.ghost:hover{background:var(--gray-bg-light)}
+.section{display:flex;flex-direction:column;gap:12px}
+.sec-name{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-radius:6px;color:#fff;height:40px}
+.sec-name.imp{background:var(--secondary-bg-mid)}
+.sec-name.gen{background:var(--primary-bg-mid)}
+.sec-name .l{display:flex;align-items:center;gap:4px;font-size:16px;line-height:24px;font-weight:700}
+.sec-name .l img{width:16px;height:16px}
+.sec-name.gen .l img{width:20px;height:20px}
+.sec-name .r{display:flex;align-items:center;gap:4px;font-size:14px;line-height:20px}
+.sec-name .num{display:grid;place-items:center;width:20px;height:20px;margin:2px;border-radius:50%;background:#fff;font-size:12px;font-weight:700}
+.sec-name.imp .num{color:var(--secondary-bg-mid)}
+.sec-name.gen .num{color:var(--primary-bg-mid)}
+.card{position:relative;text-align:left;width:100%;padding:16px;display:flex;flex-direction:column;gap:16px;border-radius:6px;background:#fff;border:1px solid var(--primary-border-low);transition:box-shadow .15s}
+.card.imp{border-color:var(--secondary-border-low)}
+.card.unread.imp{border:0;background:url(assets/card-bg-important-4.svg) 0 0/100% 100% no-repeat}
+.card.unread.gen{border:0;background:url(assets/card-bg-general-4.svg) 0 0/100% 100% no-repeat}
+.card:hover{box-shadow:var(--shadow-4)}
+.card .top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.date{font-size:14px;line-height:20px;color:var(--primary-fg-highest);display:flex;align-items:center;gap:4px;white-space:nowrap}
+.date img{width:16px;height:16px}
+.imp .date{color:var(--secondary-fg-highest)}
+.card .body{display:flex;flex-direction:column;gap:8px}
+.card h3{font-size:18px;line-height:26px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card p{color:var(--gray-fg-mid-on-gray);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.empty{border:1px dashed var(--gray-border-light);border-radius:6px;padding:32px;text-align:center;color:var(--gray-fg-mid)}
+.pager{display:flex;gap:8px;justify-content:center}
+.pager button{width:32px;height:32px;border:1px solid var(--gray-border-light);border-radius:6px;background:#fff;font-weight:700;font-size:12px;line-height:18px;display:grid;place-items:center}
+.pager button img{width:20px;height:20px}
+.pager button.on{background:var(--primary-bg-lowest);border-color:var(--primary-border-low);color:var(--primary-fg-mid)}
+
+/* ---------- Article detail ---------- */
+.detail{position:relative;background:var(--primary-border-high);overflow:hidden;padding:56px 0 80px}
+.detail .d1{position:absolute;left:-21px;top:-52px;width:404px}
+.detail .d2{position:absolute;right:-40px;bottom:-80px;width:294px;transform:rotate(20.93deg)}
+.sheet{position:relative;width:min(1016px,calc(100% - 64px));margin:0 auto}
+.a-head{position:relative;overflow:hidden;background:var(--primary-border-low);border-bottom:2px solid var(--primary-border-high);border-radius:12px 12px 0 0;padding:16px 24px;display:flex;flex-direction:column;gap:12px}
+.a-head .deco{position:absolute;right:-60px;top:-70px;width:263px;transform:rotate(-16.99deg)}
+.a-head .row{display:flex;justify-content:space-between;align-items:center;position:relative}
+.a-head h1{position:relative;font-size:21px;line-height:30px;margin-top:-4px;max-width:90%}
+.a-head .date{position:relative}
+.a-body{background:#fff;border-radius:0 0 12px 12px;padding:24px 16px 16px;display:flex;flex-direction:column;gap:16px;box-shadow:var(--shadow-1)}
+.tabs{display:flex;border-bottom:2px solid var(--gray-border-divider);height:48px}
+.tab{width:250px;display:flex;align-items:center;justify-content:center;gap:4px;padding:12px 24px;font-size:16px;line-height:24px;font-weight:700;border-radius:8px 8px 0 0;margin-bottom:-2px;border-bottom:2px solid transparent}
+.tab img{width:20px;height:20px}
+.tab.on{background:var(--primary-bg-lowest);border-bottom-color:var(--primary-border-high);color:var(--primary-fg-high)}
+.tab:not(.on):hover{background:var(--gray-bg-light)}
+.box{background:var(--gray-bg-light);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.box .t{display:flex;align-items:center;gap:8px;color:var(--primary-fg-high);font-size:16px;line-height:24px;font-weight:700}
+.box .t img{width:24px;height:24px}
+.box p{line-height:22px}
+.contact li{margin-left:21px}
+.contact li span{color:var(--primary-fg-high);margin-left:8px;white-space:nowrap}
+.group{border:1px solid var(--primary-border-low);border-radius:6px;overflow:hidden;padding-bottom:16px;display:flex;flex-direction:column;gap:12px}
+.group>.gh{background:var(--primary-bg-mid);color:#fff;font-size:16px;line-height:24px;font-weight:700;padding:8px 12px;min-height:40px}
+.doc{margin:0 16px;border-radius:6px;overflow:hidden}
+.doc .dh{background:var(--primary-bg-low);display:flex;align-items:center;gap:12px;min-height:48px;padding:8px 12px 8px 16px}
+.doc .dh>img{width:24px;height:32px}
+.doc .link{flex:1;text-align:left}
+.doc .link span{color:var(--primary-fg-mid);border-bottom:1px solid var(--primary-fg-mid)}
+.doc .link:hover span{color:var(--primary-fg-highest)}
+.doc .acc{width:28px;height:28px;display:grid;place-items:center;border-radius:6px}
+.doc .acc:hover{background:rgba(255,255,255,.6)}
+.doc .acc img{width:16px;height:16px;transition:transform .15s}
+.doc.closed .acc img{transform:rotate(180deg)}
+.doc .rows{border:1px solid var(--gray-border-light);border-top:0;border-radius:0 0 6px 6px}
+.doc.closed .rows{display:none}
+.doc .r{display:flex}
+.doc .r+.r{border-top:1px solid var(--gray-border-light)}
+.doc .r>div{padding:12px}
+.doc .r .c{flex:1;border-right:1px solid var(--gray-border-light)}
+.doc .r .c b{display:block}
+.doc .r .s{width:44%}
+.ig-bar{background:var(--primary-bg-low);border-radius:8px 8px 0 0;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 12px}
+.ig-bar .n{display:flex;align-items:center;gap:8px;font-size:16px;line-height:24px;font-weight:700}
+.ig-bar .n img{width:20px;height:20px}
+.btn-sec{display:flex;align-items:center;gap:8px;height:40px;padding:0 12px;border:1px solid var(--primary-border-high);background:#fff;border-radius:8px;color:var(--primary-fg-high);font-weight:700;white-space:nowrap}
+.btn-sec:hover{background:var(--primary-bg-lowest)}
+.ig{border:1px solid var(--gray-border-divider);border-top:0;border-radius:0 0 8px 8px;background:var(--gray-bg-light);padding:16px;display:flex;flex-direction:column;align-items:center;gap:16px}
+.ig .main{position:relative;width:410px;box-shadow:var(--shadow-4)}
+.ig .main>img{width:100%}
+.ig .pg{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);background:rgba(26,30,40,.45);color:#fff;font-size:12px;line-height:18px;border-radius:10px;padding:1px 8px}
+.thumbs{width:100%;background:#fff;border-radius:8px;padding:12px 24px;display:flex;align-items:center;gap:16px}
+.thumbs .nav{width:46px;height:46px;border:1px solid var(--primary-border-high);border-radius:6px;display:grid;place-items:center;background:#fff;flex-shrink:0}
+.thumbs .nav img{width:20px;height:20px}
+.thumbs .nav:disabled{opacity:.35;cursor:default}
+.thumbs .list{flex:1;display:flex;justify-content:center;gap:16px;overflow:hidden}
+.th{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:10px;line-height:14px;color:var(--gray-fg-mid)}
+.th .im{position:relative;width:86px;height:121px;border:2px solid transparent;border-radius:4px;overflow:hidden;background:#fff}
+.th .im>img{width:100%;height:100%;object-fit:cover;object-position:top}
+.th .im .poster{position:absolute;left:0;top:0;transform:scale(.2098);transform-origin:0 0}
+.th.on .im{border-color:var(--primary-bg-mid)}
+.th .dl{position:absolute;right:4px;top:4px;width:20px;height:20px;border-radius:4px;background:#fff;display:grid;place-items:center;box-shadow:var(--shadow-1);z-index:1}
+/* Generated infographic poster (for articles without Figma infographics) */
+.poster{width:410px;height:580px;background:#fff;display:flex;flex-direction:column;text-align:left;overflow:hidden}
+.p-top{background:linear-gradient(120deg,var(--primary-fg-highest),var(--primary-bg-mid));color:#fff;padding:14px 20px 56px;position:relative}
+.p-brand{display:flex;align-items:center;justify-content:space-between;font-size:12px;line-height:18px;font-weight:700}
+.p-brand span{display:flex;align-items:center;gap:6px}
+.p-brand img{width:22px;height:10px}
+.p-brand i{font-style:normal;background:rgba(255,255,255,.2);border-radius:10px;padding:1px 8px}
+.p-top small{display:block;margin-top:22px;font-size:14px;line-height:20px;color:#d4ecfb}
+.p-top h2{font-size:30px;line-height:40px;margin-top:2px}
+.p-pts{list-style:none;margin:-36px 16px 0;display:flex;flex-direction:column;gap:10px;position:relative;counter-reset:p}
+.p-pts li{counter-increment:p;background:#fff;border:1px solid var(--primary-border-low);border-radius:10px;padding:12px 12px 12px 52px;font-size:15px;line-height:22px;position:relative;box-shadow:var(--shadow-1)}
+.p-pts li::before{content:counter(p);position:absolute;left:12px;top:50%;transform:translateY(-50%);width:28px;height:28px;border-radius:50%;background:var(--secondary-bg-mid);color:#fff;font-weight:700;display:grid;place-items:center;font-size:14px}
+.p-foot{margin-top:auto;background:var(--primary-bg-lowest);padding:12px 20px;font-size:12px;line-height:18px;color:var(--gray-fg-mid-on-gray)}
+.p-foot b{display:block;color:var(--primary-fg-highest);font-size:13px}
+
+/* Select-overflow + Overflow-list (Morning Spark Design System) — replaces the native select menu */
+.dd{position:fixed;z-index:9998;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 1px 2px rgba(27,29,31,.08),0 8px 24px rgba(27,29,31,.12);font-family:var(--font);display:flex;flex-direction:column}
+.dd-list{overflow-y:auto;max-height:calc(320px * var(--ui))}
+.dd-list::-webkit-scrollbar{width:6px}.dd-list::-webkit-scrollbar-thumb{background:var(--gray-bg-midgray);border-radius:8px}
+.dd-it{display:flex;align-items:center;gap:8px;width:100%;height:calc(40px * var(--ui));padding:0 calc(12px * var(--ui));background:#fff;color:var(--gray-fg-high);font-size:calc(14px * var(--ui));line-height:1.43;text-align:left;border-bottom:1px solid var(--gray-border-divider);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.dd-it:last-child{border-bottom:0}
+.dd-it:hover,.dd-it.kb{background:var(--gray-bg-light)}
+.dd-it.on{background:var(--primary-bg-lowest);color:var(--primary-fg-high)}
+.dd-it.ph{color:var(--gray-fg-low)}
+.dd-it:disabled{color:var(--gray-fg-low);cursor:not-allowed;background:#fff}
+.dd-open{border-color:var(--primary-bg-mid)!important;box-shadow:0 0 0 3px var(--primary-bg-lowest)}
+.dd-open img{transform:rotate(180deg)!important}
+.select.dd-open img{transform:none!important}
+.sel img,.select img{transition:transform .15s}
+
+/* toast */
+/* ---- DS audit: Button / Tabs / Pagination / Input states ---- */
+/* Button: Idle → Hover (bg high) → Pressed (bg highest) → Disabled (gray) → Keyboard focus (ring) */
+.btn-primary:hover,.btn.pri:hover{background:var(--primary-bg-high)}
+.btn-primary:active,.btn.pri:active{background:var(--primary-fg-highest)}
+.btn.sec:active,.btn-sec:active{background:var(--primary-bg-low)}
+.btn.out:hover,.ghost:hover{background:var(--gray-bg-light)}
+.btn.out:active,.ghost:active{background:var(--gray-bg-midgray)}
+.btn.danger:hover{background:#b23a38}.btn.danger:active{background:#9a2f2d}
+.btn.pri.off,.btn-primary:disabled,.btn:disabled{background:var(--gray-bg-midgray)!important;color:var(--gray-fg-low)!important;border-color:var(--gray-bg-midgray)!important;cursor:not-allowed}
+.btn.pri.off img,.btn-primary:disabled img{filter:grayscale(1) opacity(.5)}
+.btn:focus-visible,.btn-primary:focus-visible,.btn-sec:focus-visible,.ghost:focus-visible,.ib:focus-visible,.tbtn:focus-visible,.chip:focus-visible,.pager button:focus-visible{outline:2px solid var(--primary-border-high);outline-offset:2px}
+/* Tabs: Idle (dark text, gray line) · Hover (blue text) · Active (blue text, lowest-blue bg, light-blue line) · Disabled */
+.tab,.m-tab{border-bottom:2px solid var(--gray-border-divider)!important;transition:color .1s}
+.tab:not(.on):hover,.m-tab:not(.on):hover{background:none!important;color:var(--primary-fg-high)}
+.tab.on,.m-tab.on{background:var(--primary-bg-lowest)!important;color:var(--primary-fg-high);border-bottom-color:var(--primary-border-high)!important}
+.tab:disabled,.m-tab:disabled{color:var(--gray-fg-low);cursor:not-allowed}
+.tab:focus-visible,.m-tab:focus-visible{outline:2px solid var(--primary-border-high);outline-offset:-2px}
+/* Pagination: hover + disabled ‹ › at the ends + ellipsis */
+.pager button:hover:not(:disabled):not(.on){background:var(--gray-bg-light)}
+.pager button:disabled{background:var(--gray-bg-light);border-color:var(--gray-border-divider);cursor:not-allowed}
+.pager button:disabled img{opacity:.35}
+.pager .ell{width:32px;height:32px;border:1px solid var(--gray-border-light);border-radius:6px;display:grid;place-items:center;font-size:12px;font-weight:700;background:#fff}
+/* Input: Idle → Hover (darker border) → Active (blue border) → Invalid (red) → Disabled (gray) */
+.input:hover,.fin:hover:not(:disabled),.sel:hover,.select:hover,.dt:not(.off):hover,.ms-box:hover{border-color:var(--gray-fg-low)}
+.input:focus-within,.fin:focus,.dt:focus-within{border-color:var(--primary-bg-mid)}
+.field.err .input:hover,.fld.err .fin:hover{border-color:var(--error-fg-high)}
+
+/* Snackbar (DS) */
+#toast{position:fixed;left:50%;bottom:64px;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;zoom:var(--ui)}
+.snack{pointer-events:auto;width:340px;min-height:60px;background:#fff;border-radius:6px;box-shadow:0 1px 2px rgba(27,29,31,.08),0 8px 24px rgba(27,29,31,.12);border-left:4px solid var(--sn);display:flex;align-items:flex-start;gap:8px;padding:10px 12px 10px 12px;font-family:var(--font);animation:snIn .18s ease-out}
+.snack.out{opacity:0;transform:translateY(6px);transition:all .2s}
+.snack .ic{width:16px;height:16px;flex-shrink:0;margin-top:2px}
+.snack .tx{flex:1;min-width:0}
+.snack b{display:block;font-size:14px;line-height:20px;color:var(--gray-fg-high)}
+.snack.error b{color:var(--error-fg-high)}
+.snack span{display:block;font-size:12px;line-height:18px;color:var(--gray-fg-mid)}
+.snack button{width:24px;height:24px;display:grid;place-items:center;border-radius:4px;flex-shrink:0;color:var(--gray-fg-high)}
+.snack button:hover{background:var(--gray-bg-light)}
+.snack.info{--sn:#73a8f0}.snack.success{--sn:#7cbf7c}.snack.error{--sn:#ef8079}.snack.warning{--sn:#f2b928}
+@keyframes snIn{from{opacity:0;transform:translateY(8px)}}
+
+/* Checkbox & radio (DS) */
+input[type=checkbox],input[type=radio]{appearance:none;-webkit-appearance:none;width:16px;height:16px;margin:0;border:1.5px solid var(--gray-border-light);background:#fff;flex-shrink:0;cursor:pointer;display:inline-grid;place-items:center;transition:background .1s,border-color .1s}
+input[type=checkbox]{border-radius:3px}
+input[type=radio]{border-radius:50%}
+input[type=checkbox]:hover,input[type=radio]:hover{border-color:var(--primary-bg-mid)}
+input[type=checkbox]:checked{background:var(--primary-fg-high) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 8.2l2.6 2.6L12 5.4' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/14px no-repeat;border-color:var(--primary-fg-high)}
+input[type=radio]:checked{border-color:var(--primary-fg-high);background:var(--primary-fg-high);box-shadow:inset 0 0 0 3px #fff}
+input[type=checkbox]:disabled,input[type=radio]:disabled{background-color:var(--gray-bg-midgray);border-color:var(--gray-border-light);cursor:not-allowed}
+input[type=checkbox]:focus-visible,input[type=radio]:focus-visible{outline:2px solid var(--primary-bg-mid);outline-offset:2px}
+
+/* Tooltip (DS) */
+.tt{position:fixed;z-index:10000;zoom:var(--ui);max-width:260px;background:var(--gray-fg-high);color:#fff;font:12px/18px var(--font);border-radius:6px;padding:6px 10px;pointer-events:none;box-shadow:0 1px 2px rgba(27,29,31,.12)}
+.tt::after{content:"";position:absolute;left:var(--ax,50%);bottom:-4px;width:8px;height:8px;background:inherit;transform:translateX(-50%) rotate(45deg)}
+.tt.below::after{bottom:auto;top:-4px}
+
+/* Date picker (DS) */
+.dp{position:fixed;z-index:9998;zoom:var(--ui);width:256px;background:#fff;border-radius:12px;padding:12px;box-shadow:0 1px 1px rgba(27,29,31,.08),0 8px 12px rgba(27,29,31,.12);display:flex;flex-direction:column;gap:12px;font-family:var(--font);color:var(--gray-fg-high)}
+.dp-h{display:flex;justify-content:space-between;align-items:center}
+.dp-h .l{display:flex;gap:4px}
+.dp-s{height:32px;border:1px solid var(--gray-border-light);border-radius:6px;padding:0 8px;display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:12px;line-height:18px;background:#fff}
+.dp-s.on{border-color:var(--primary-bg-mid);box-shadow:0 0 0 2px var(--primary-bg-lowest)}
+.dp-s svg{transition:transform .15s}.dp-s.on svg{transform:rotate(180deg)}
+.dp-h .r{display:flex;gap:12px}
+.dp-nav{width:20px;height:20px;border-radius:6px;display:grid;place-items:center}
+.dp-nav:hover{background:var(--gray-bg-light)}
+.dp-days,.dp-grid{display:grid;grid-template-columns:repeat(7,24px);justify-content:space-between}
+.dp-days span{font-size:10px;line-height:14px;font-weight:700;text-align:center;padding:4px 0}
+.dp-days span:first-child{color:var(--error-fg-high)}
+.dp-grid{row-gap:8px;padding-top:4px}
+.dp-d{position:relative;width:24px;height:24px;border-radius:8px;font-size:12px;line-height:18px;display:grid;place-items:center}
+.dp-d:hover{background:var(--primary-bg-low)}
+.dp-d.out{color:var(--gray-fg-low)}
+.dp-d.today::after{content:"";position:absolute;left:50%;top:19px;width:4px;height:4px;border-radius:50%;background:var(--primary-fg-high);transform:translateX(-50%)}
+.dp-d.sel{background:var(--primary-bg-mid);color:#fff;font-weight:700}
+.dp-d.sel.today::after{background:#fff}
+.dp-d:disabled{color:var(--gray-border-light);cursor:not-allowed;background:none}
+.dp-mg{display:grid;grid-template-columns:repeat(3,1fr);gap:16px 8px;padding:4px 0}
+.dp-mg button{height:32px;border-radius:8px;font-size:12px;line-height:18px}
+.dp-mg button:hover{background:var(--primary-bg-low)}
+.dp-mg button.sel{background:var(--primary-bg-mid);color:#fff}
+.dp-mg button.out{color:var(--gray-fg-low)}
+.dp-ft{display:flex;justify-content:space-between;border-top:1px solid var(--gray-border-divider);padding-top:8px;margin-top:-4px}
+.dp-ft button{font-size:12px;font-weight:700;color:var(--primary-fg-high);padding:2px 4px;border-radius:4px}
+.dp-ft button:hover{background:var(--primary-bg-lowest)}
+.dp-ft button.clr{color:var(--gray-fg-mid)}
+.dp-ft button:disabled{color:var(--gray-border-light);background:none;cursor:not-allowed}
+</style>
+</head>
+<body>
+
+<section id="desktop">
+  <!-- Abstract "bloom" wallpaper in the spirit of the Windows 11 default -->
+  <svg id="bloom" viewBox="-750 -750 1500 1500" aria-hidden="true">
+    <defs>
+      <linearGradient id="pa" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#dff1ff" stop-opacity=".95"/><stop offset=".5" stop-color="#5fb0ff" stop-opacity=".9"/><stop offset="1" stop-color="#0b4fc4" stop-opacity=".85"/></linearGradient>
+      <linearGradient id="pb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9fd3ff" stop-opacity=".9"/><stop offset="1" stop-color="#0a3fa8" stop-opacity=".9"/></linearGradient>
+      <radialGradient id="core"><stop offset="0" stop-color="#fff" stop-opacity=".9"/><stop offset=".6" stop-color="#b9e0ff" stop-opacity=".25"/><stop offset="1" stop-color="#b9e0ff" stop-opacity="0"/></radialGradient>
+    </defs>
+    <g id="petals"></g>
+    <circle r="170" fill="url(#core)"/>
+  </svg>
+
+  <div class="icons" id="icons"></div>
+
+  <div class="hint" id="hint">
+    <button id="hint-x" aria-label="ปิด">✕</button>
+    <b>Morning Spark · Receiver prototype</b><br>
+    <b>Receiver:</b> Widget + ไอคอน Morning Spark · <b>Maker:</b> คลิก “Morning Spark Admin” เพื่อสร้าง/แก้ไขประกาศ แล้วดูผลที่ Widget ได้ทันที ลากหัวหน้าต่างเพื่อย้ายตำแหน่งได้
+  </div>
+
+  <div class="widget" id="widget">
+    <div class="w-inner">
+      <div class="w-head drag">
+        <div class="brand"><img src="assets/w-logo-white.svg" alt="">Morning spark</div>
+        <button id="w-toggle" aria-label="ย่อ/ขยาย Widget"><img src="assets/w-minus.svg" alt="" width="12" height="12"></button>
+      </div>
+      <div class="w-sum">
+        <div class="t">คุณมี <span class="count" data-unread></span> ประกาศใหม่</div>
+        <div class="u">อัปเดตล่าสุด 09/09/2569 06:00:00</div>
+        <img class="deco" src="assets/w-deco.svg" alt="">
+      </div>
+      <div class="w-body">
+        <div class="w-list" id="w-list"></div>
+        <button class="btn-primary" data-go="open">อ่านประกาศทั้งหมด <img src="assets/w-chevron.svg" alt=""></button>
+      </div>
+    </div>
+  </div>
+
+  <div id="windows"></div>
+
+  <div class="taskbar" id="taskbar">
+    <div class="weather"><svg width="24" height="24" viewBox="0 0 24 24"><circle cx="9" cy="9" r="4" fill="#f7b500"/><path d="M8 19h10a4 4 0 000-8 5 5 0 00-9.6 1.5A3.3 3.3 0 008 19z" fill="#dfe6ef"/></svg><div><b>28°C</b>Partly sunny</div></div>
+    <button class="tb" id="tb-start" aria-label="Start"></button>
+    <div class="tb-search"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2.4"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg>Search</div>
+    <div id="tb-apps" style="display:flex;gap:4px"></div>
+    <div class="tray">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><path d="M6 15l6-6 6 6"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><path d="M2 9a15 15 0 0120 0M5 12.5a10 10 0 0114 0M8.5 16a5 5 0 017 0"/><circle cx="12" cy="19" r="1" fill="#333"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 010 6"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><rect x="2" y="7" width="18" height="10" rx="2"/><path d="M22 11v2"/><rect x="4" y="9" width="10" height="6" fill="#333" stroke="none"/></svg>
+      <div class="clock">06:00<br>9/9/2026</div>
+    </div>
+  </div>
+</section>
+
+<div id="toast"></div>
+
+<script src="data.js"></script>
+<script>
+const A = 'assets/';
+const TYPE = {product:{label:'ผลิตภัณฑ์', icon:'icon-tag-blue.svg', wicon:'w-icon-tag.svg'}, practice:{label:'ข้อปฏิบัติ', icon:'icon-newspaper-blue.svg', wicon:'w-icon-newspaper.svg'}};
+const state = {loggedIn:false, screen:'login', next:null, article:null, tab:'summary', img:0,
+  q:'', type:'all', read:'all', status:'all', page:1};
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+// Pagination-Page (DS): ≤7 pages show all; more than 7 → first-4 / middle / last-4 patterns with "…"
+function pagerHTML(cur, n, attr){
+  let list;
+  if (n <= 7) list = Array.from({length:n}, (_,i)=>i+1);
+  else if (cur <= 4) list = [1,2,3,4,5,'…',n];
+  else if (cur >= n-3) list = [1,'…',n-4,n-3,n-2,n-1,n];
+  else list = [1,'…',cur-1,cur,cur+1,'…',n];
+  const b = (v, inner, dis) => `<button data-${attr}="${v}" ${dis?'disabled':''}>${inner}</button>`;
+  return b('prev', `<img src="${A}icon-chevron-left.svg" alt="ก่อนหน้า">`, cur<=1)
+    + list.map(p => p==='…' ? '<span class="ell">…</span>' : `<button data-${attr}="${p}" class="${p===cur?'on':''}" ${p===cur?'aria-current="page"':''}>${p}</button>`).join('')
+    + b('next', `<img src="${A}icon-chevron-right-sm.svg" alt="ถัดไป">`, cur>=n);
+}
+
+// Snackbar (DS): toast(title, {type:'success'|'info'|'warning'|'error', desc})
+const SN_IC = {
+  info:'<svg class="ic" viewBox="0 0 16 16"><circle cx="8" cy="8" r="8" fill="#1d5bd6"/><path d="M8 7v4.2M8 4.6v.2" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg>',
+  success:'<svg class="ic" viewBox="0 0 16 16"><circle cx="8" cy="8" r="8" fill="#1f8a3b"/><path d="M4.6 8.2l2.2 2.2 4.6-4.6" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  error:'<svg class="ic" viewBox="0 0 16 16"><path d="M8 1l7.4 13H.6z" fill="#c84341"/><path d="M8 6v4M8 12v.2" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>',
+  warning:'<svg class="ic" viewBox="0 0 16 16"><path d="M8 1l7.4 13H.6z" fill="#e3a008"/><path d="M8 6v4M8 12v.2" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>'};
+function toast(msg, o={}){
+  const type = o.type || (/^กรุณา|ไม่สามารถ|ยาวเกิน|สูงสุด/.test(msg) ? 'warning' : /ขอบเขต|ตัวอย่าง|กำลังแก้ไข|เปิดเอกสาร/.test(msg) ? 'info' : 'success');
+  const box = $('#toast'), el = document.createElement('div');
+  el.className = 'snack ' + type; el.setAttribute('role', type==='error'||type==='warning' ? 'alert' : 'status');
+  el.innerHTML = `${SN_IC[type]}<div class="tx"><b>${esc(msg)}</b>${o.desc?`<span>${esc(o.desc)}</span>`:''}</div><button aria-label="ปิด"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>`;
+  const close = () => { el.classList.add('out'); setTimeout(()=>el.remove(), 200); };
+  el.querySelector('button').addEventListener('click', e => { e.stopPropagation(); close(); });
+  box.appendChild(el); while (box.children.length > 3) box.firstChild.remove();
+  setTimeout(close, o.ms || 3600);
+}
+
+/* Date picker (DS) — Thai months, Buddhist years, date / month / year views */
+const TH_M = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+const DP_TODAY = {d:9, m:8, y:2569};
+const CHEV = (d) => `<svg width="${d==='down'?12:14}" height="${d==='down'?12:14}" viewBox="0 0 16 16"><path d="${{down:'M4 6l4 4 4-4',left:'M10 4L6 8l4 4',right:'M6 4l4 4-4 4'}[d]}" fill="none" stroke="#1a1e28" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+let dp = null;
+function closeDP(){ if (dp){ dp.el.remove(); dp = null; } }
+function openDP(anchor, value, onPick, opt={}){
+  if (dp?.anchor===anchor) return closeDP();
+  closeDP();
+  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value||''), sel = m ? {d:+m[1], m:+m[2]-1, y:+m[3]} : null;
+  const min = opt.min && /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(opt.min);
+  const minKey = min ? (+min[3])*10000 + (+min[2]-1)*100 + (+min[1]) : 0;
+  const el = document.createElement('div'); el.className = 'dp'; el.setAttribute('role','dialog'); el.setAttribute('aria-label','เลือกวันที่');
+  document.body.appendChild(el);
+  dp = {el, anchor, sel, view:'date', m:(sel||DP_TODAY).m, y:(sel||DP_TODAY).y, onPick};
+  const fmt = (d,mo,y) => `${String(d).padStart(2,'0')}/${String(mo+1).padStart(2,'0')}/${y}`;
+  const render = () => {
+    const s = dp, ce = new Date(s.y-543, s.m, 1), start = ce.getDay();
+    let body = '';
+    if (s.view==='date'){
+      const cells = [];
+      for (let i = 0; i < 42; i++){
+        const dt = new Date(s.y-543, s.m, 1 - start + i), d = dt.getDate(), mo = dt.getMonth(), y = dt.getFullYear()+543;
+        const key = y*10000 + mo*100 + d;
+        const cls = ['dp-d', mo!==s.m?'out':'', (d===DP_TODAY.d&&mo===DP_TODAY.m&&y===DP_TODAY.y)?'today':'', (sel&&d===sel.d&&mo===sel.m&&y===sel.y)?'sel':''].join(' ');
+        cells.push(`<button type="button" class="${cls}" data-dpd="${fmt(d,mo,y)}" ${key<minKey?'disabled':''}>${d}</button>`);
+      }
+      body = `<div class="dp-days">${['อา','จ','อ','พ','พฤ','ศ','ส'].map(x=>`<span>${x}</span>`).join('')}</div><div class="dp-grid">${cells.join('')}</div>`;
+    } else if (s.view==='month'){
+      body = `<div class="dp-mg">${TH_M.map((n,i)=>`<button type="button" class="${i===s.m?'sel':''}" data-dpm="${i}">${n}</button>`).join('')}</div>`;
+    } else {
+      // 12-year page that ends on the current year (2558–2569 by default, like the DS frame)
+      const from = DP_TODAY.y - 11 + Math.floor((s.y - (DP_TODAY.y - 11)) / 12) * 12;
+      body = `<div class="dp-mg">${Array.from({length:12},(_,i)=>from+i).map(y=>`<button type="button" class="${y===s.y?'sel':''}" data-dpy="${y}">${y}</button>`).join('')}</div>`;
+    }
+    el.innerHTML = `<div class="dp-h"><div class="l">
+        <button type="button" class="dp-s${s.view==='month'?' on':''}" data-dpv="month" style="width:84px">${TH_M[s.m]}${CHEV('down')}</button>
+        <button type="button" class="dp-s${s.view==='year'?' on':''}" data-dpv="year" style="width:62px">${s.y}${CHEV('down')}</button></div>
+        <div class="r"><button type="button" class="dp-nav" data-dpn="-1" aria-label="ก่อนหน้า">${CHEV('left')}</button><button type="button" class="dp-nav" data-dpn="1" aria-label="ถัดไป">${CHEV('right')}</button></div></div>
+      ${body}
+      <div class="dp-ft"><button type="button" class="clr" data-dpclear>ล้าง</button><button type="button" data-dptoday ${DP_TODAY.y*10000+DP_TODAY.m*100+DP_TODAY.d < minKey ? 'disabled' : ''}>วันนี้</button></div>`;
+  };
+  render();
+  el.addEventListener('mousedown', e => e.preventDefault());
+  el.addEventListener('click', e => {
+    e.stopPropagation();
+    const b = e.target.closest('button'); if (!b) return; const d = b.dataset, s = dp;
+    if (d.dpv){ s.view = s.view===d.dpv ? 'date' : d.dpv; }
+    else if (d.dpn){ const n = +d.dpn; if (s.view==='date'){ s.m += n; if (s.m<0){s.m=11;s.y--;} if (s.m>11){s.m=0;s.y++;} } else s.y += s.view==='year' ? n*12 : n; }
+    else if (d.dpm){ s.m = +d.dpm; s.view = 'date'; }
+    else if (d.dpy){ s.y = +d.dpy; s.view = 'date'; }
+    else if (d.dpd){ const cb = s.onPick; closeDP(); return cb(d.dpd); }
+    else if (d.dptoday!==undefined){ const cb = s.onPick; closeDP(); return cb(fmt(DP_TODAY.d, DP_TODAY.m, DP_TODAY.y)); }
+    else if (d.dpclear!==undefined){ const cb = s.onPick; closeDP(); return cb(''); }
+    render();
+  });
+  const z = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui')) || 1;
+  const r = anchor.getBoundingClientRect(), h = el.offsetHeight*z, below = innerHeight-48-r.bottom;
+  el.style.left = Math.min(r.left, innerWidth-256*z-8)/z + 'px';
+  el.style.top = (below < h+8 && r.top > h+8 ? r.top-h-4 : r.bottom+4)/z + 'px';
+}
+document.addEventListener('mousedown', e => { if (dp && !e.target.closest('.dp') && !dp.anchor.contains(e.target)) closeDP(); }, true);
+document.addEventListener('keydown', e => { if (e.key==='Escape' && dp){ closeDP(); } });
+addEventListener('resize', closeDP);
+
+/* Tooltip (DS) for anything with data-tip */
+let ttEl = null;
+document.addEventListener('mouseover', e => {
+  const t = e.target.closest('[data-tip]');
+  if (!t){ ttEl?.remove(); ttEl = null; return; }
+  if (ttEl?._for===t) return;
+  ttEl?.remove(); ttEl = document.createElement('div'); ttEl.className = 'tt'; ttEl._for = t; ttEl.textContent = t.dataset.tip; ttEl.setAttribute('role','tooltip');
+  document.body.appendChild(ttEl);
+  const z = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui')) || 1;
+  const r = t.getBoundingClientRect(), w = ttEl.offsetWidth*z, h = ttEl.offsetHeight*z;
+  let x = Math.max(8, Math.min(innerWidth-w-8, r.left + r.width/2 - w/2)), y = r.top - h - 8, below = y < 8;
+  if (below){ y = r.bottom + 8; ttEl.classList.add('below'); }
+  ttEl.style.left = x/z+'px'; ttEl.style.top = y/z+'px'; ttEl.style.setProperty('--ax', ((r.left + r.width/2 - x)/z)+'px');
+});
+document.addEventListener('scroll', () => { ttEl?.remove(); ttEl = null; }, true);
+document.addEventListener('mousedown', () => { ttEl?.remove(); ttEl = null; }, true);
+
+/* ---------- OS icons (generic drawings, not product logos) ---------- */
+const IC = {
+  folder:`<svg viewBox="0 0 48 48"><path d="M4 13a4 4 0 014-4h11l4 4h17a4 4 0 014 4v2H4z" fill="#e3a21a"/><rect x="4" y="17" width="40" height="23" rx="3" fill="#ffc83d"/></svg>`,
+  pc:`<svg viewBox="0 0 48 48"><rect x="5" y="8" width="38" height="25" rx="3" fill="#2b88d8"/><rect x="8" y="11" width="32" height="19" rx="1" fill="#9fd3ff"/><rect x="20" y="33" width="8" height="5" fill="#8a8f98"/><rect x="14" y="38" width="20" height="3" rx="1.5" fill="#6b7078"/></svg>`,
+  bin:`<svg viewBox="0 0 48 48"><path d="M12 14h24l-2.5 27a3 3 0 01-3 2.7H17.5a3 3 0 01-3-2.7z" fill="#d9e4f2" stroke="#8aa2c2" stroke-width="1.5"/><rect x="9" y="10" width="30" height="5" rx="2" fill="#b7c7dc"/><path d="M20 20v18M28 20v18" stroke="#8aa2c2" stroke-width="1.5"/></svg>`,
+  web:`<svg viewBox="0 0 48 48"><defs><linearGradient id="wg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3ccbf4"/><stop offset="1" stop-color="#1b6fd8"/></linearGradient></defs><circle cx="24" cy="24" r="19" fill="url(#wg)"/><path d="M5 24h38M24 5c6 6 6 32 0 38M24 5c-6 6-6 32 0 38" stroke="#fff" stroke-width="2" fill="none" opacity=".8"/></svg>`,
+  start:`<svg viewBox="0 0 24 24"><rect x="2" y="2" width="9.5" height="9.5" rx="1.5" fill="#0a64d6"/><rect x="12.5" y="2" width="9.5" height="9.5" rx="1.5" fill="#1a8cf0"/><rect x="2" y="12.5" width="9.5" height="9.5" rx="1.5" fill="#1a8cf0"/><rect x="12.5" y="12.5" width="9.5" height="9.5" rx="1.5" fill="#4aa8ff"/></svg>`,
+  tile:(l,c)=>`<svg viewBox="0 0 48 48"><rect x="6" y="6" width="36" height="36" rx="8" fill="${c}"/><text x="24" y="31.5" text-anchor="middle" font-size="19" font-weight="700" fill="#fff" font-family="Segoe UI,Arial,sans-serif">${l}</text></svg>`,
+  doc:c=>`<svg viewBox="0 0 24 24"><path d="M6 2h8l5 5v15H6z" fill="${c}"/><path d="M14 2v5h5" fill="#fff" opacity=".6"/></svg>`,
+};
+const msIcon = (dot=true) => `<span class="ms"><img src="${A}w-logo-white.svg" alt="">${dot?'<span class="dot" data-unread></span>':''}</span>`;
+const APPS = {
+  pc:{name:'This PC', icon:IC.pc, kind:'explorer', path:'This PC'},
+  bin:{name:'Recycle Bin', icon:IC.bin, kind:'explorer', path:'Recycle Bin'},
+  docs:{name:'Documents', icon:IC.folder, kind:'explorer', path:'Documents'},
+  dl:{name:'Downloads', icon:IC.folder, kind:'explorer', path:'Downloads'},
+  forms:{name:'แบบฟอร์มสาขา', icon:IC.folder, kind:'explorer', path:'Desktop › แบบฟอร์มสาขา'},
+  edge:{name:'Web Browser', icon:IC.web, kind:'maker'},
+  admin:{name:'Morning Spark Admin', icon:IC.web, kind:'maker'},
+  outlook:{name:'Outlook', icon:IC.tile('O','#0f6cbd'), kind:'app'},
+  teams:{name:'Teams', icon:IC.tile('T','#5b5fc7'), kind:'app'},
+  word:{name:'Word', icon:IC.tile('W','#185abd'), kind:'app'},
+  excel:{name:'Excel', icon:IC.tile('X','#107c41'), kind:'app'},
+  ms:{name:'Morning Spark', kind:'ms'},
+};
+const FILES = {
+  'Documents':[['รายงานยอดขายสาขา_ก.ย.69.xlsx','excel','12 KB'],['สรุปประชุมเช้า_09-09-69.docx','word','24 KB'],['เป้าหมายไตรมาส 4.xlsx','excel','18 KB']],
+  'Downloads':[['ระเบียบปฏิบัติงาน FATCA 2569.pdf','pdf','1.2 MB'],['เรื่องเด่นเรื่องเด็ด 197.jpg','img','640 KB'],['KTC พี่เบิ้ม-Sales sheet.pdf','pdf','820 KB']],
+  'Desktop › แบบฟอร์มสาขา':[['แบบฟอร์มเปิดบัญชีออมทรัพย์.pdf','pdf','300 KB'],['FATCA Self Certification.pdf','pdf','210 KB'],['ใบสมัครสินเชื่อบ้าน.pdf','pdf','450 KB']],
+  'This PC':[['Local Disk (C:)','drive','120 GB free'],['Branch Share (S:)','drive','2.1 TB free']],
+  'Recycle Bin':[],
+};
+const FILE_IC = {excel:IC.doc('#107c41'), word:IC.doc('#185abd'), pdf:IC.doc('#c43e1c'), img:IC.doc('#7a5af8'), drive:IC.doc('#8a8f98')};
+
+function renderDesktop(){
+  const order = ['pc','bin','docs','dl','forms','ms','admin','edge','outlook','teams','word','excel'];
+  $('#icons').innerHTML = order.map(k => `<button class="d-icon" data-app="${k}">${k==='ms'?msIcon(false):APPS[k].icon}<span class="lbl">${APPS[k].name}</span></button>`).join('');
+  $('#tb-start').innerHTML = IC.start;
+  const tb = ['explorer','edge','outlook','teams','ms'];
+  $('#tb-apps').innerHTML = tb.map(k => `<button class="tb" data-tb="${k}" aria-label="${k}">${k==='ms'?msIcon():k==='explorer'?IC.folder:APPS[k].icon}</button>`).join('');
+  // Bloom petals
+  let p=''; for (let i=0;i<14;i++){ const a=i*360/14; p+=`<ellipse cx="0" cy="-300" rx="${i%2?88:110}" ry="300" transform="rotate(${a})" fill="url(#${i%2?'pb':'pa'})" opacity="${i%2?.55:.75}"/>`; }
+  $('#petals').innerHTML = p;
+}
+
+/* ---------- Window manager: drag, focus, z-order ---------- */
+let zTop = 10;
+const widget = () => $('#widget');
+function focusWin(el){
+  if (el.id==='widget'){ el.style.zIndex = ++zTop; el.classList.add('front'); }
+  else { el.style.zIndex = ++zTop; widget().style.zIndex = 2; widget().classList.remove('front'); }
+  updateTaskbar();
+}
+function makeDraggable(el, handle){
+  handle.classList.add('drag');
+  handle.addEventListener('pointerdown', e => {
+    if (e.button!==0 || e.target.closest('button') || el.classList.contains('max')) return;
+    const r = el.getBoundingClientRect(), dx = e.clientX-r.left, dy = e.clientY-r.top;
+    try { handle.setPointerCapture(e.pointerId); } catch {}
+    const move = ev => {
+      const x = Math.max(80-r.width, Math.min(innerWidth-80, ev.clientX-dx));
+      const y = Math.max(0, Math.min(innerHeight-48-36, ev.clientY-dy));
+      Object.assign(el.style, {left:x+'px', top:y+'px', right:'auto', bottom:'auto'});
+    };
+    const up = () => { handle.removeEventListener('pointermove',move); handle.removeEventListener('pointerup',up); };
+    handle.addEventListener('pointermove',move); handle.addEventListener('pointerup',up);
+  });
+  handle.addEventListener('dblclick', e => { if (!e.target.closest('button') && el.id!=='widget') el.classList.toggle('max'); });
+}
+// Resize from any edge or corner, like a Windows window
+function makeResizable(el, minW, minH){
+  ['n','s','e','w','ne','nw','se','sw'].forEach(d => {
+    const h = document.createElement('div'); h.className = 'rz rz-'+d; el.appendChild(h);
+    h.addEventListener('pointerdown', e => {
+      if (e.button!==0 || el.classList.contains('max')) return;
+      e.preventDefault();
+      const r = el.getBoundingClientRect(), sx = e.clientX, sy = e.clientY;
+      try { h.setPointerCapture(e.pointerId); } catch {}
+      const move = ev => {
+        const dx = ev.clientX-sx, dy = ev.clientY-sy, maxB = innerHeight-48;
+        let {left, top, width, height} = r;
+        if (d.includes('e')) width = Math.max(minW, Math.min(r.width+dx, innerWidth-r.left));
+        if (d.includes('w')){ width = Math.max(minW, Math.min(r.width-dx, r.right)); left = r.right-width; }
+        if (d.includes('s')) height = Math.max(minH, Math.min(r.height+dy, maxB-r.top));
+        if (d.includes('n')){ height = Math.max(minH, Math.min(r.height-dy, r.bottom)); top = r.bottom-height; }
+        Object.assign(el.style, {left:left+'px', top:top+'px', width:width+'px', height:height+'px'});
+      };
+      const up = () => { h.removeEventListener('pointermove',move); h.removeEventListener('pointerup',up); };
+      h.addEventListener('pointermove',move); h.addEventListener('pointerup',up);
+    });
+  });
+}
+function place(el){
+  if (el.dataset.placed) return;
+  const r = el.getBoundingClientRect(), n = document.querySelectorAll('.win').length;
+  el.style.left = Math.max(16,(innerWidth-r.width)/2 + (el.id==='app'?0:(n*28-140)))+'px';
+  el.style.top = Math.max(12,(innerHeight-48-r.height)/2 + (el.id==='app'?0:(n*24-60)))+'px';
+  el.dataset.placed = 1;
+}
+const ctlSvg = {min:'<svg viewBox="0 0 10 10"><path d="M0 5h10" stroke="#222"/></svg>', max:'<svg viewBox="0 0 10 10"><rect x=".5" y=".5" width="9" height="9" fill="none" stroke="#222"/></svg>', x:'<svg viewBox="0 0 10 10"><path d="M0 0l10 10M10 0L0 10" stroke="currentColor"/></svg>'};
+function openOsWin(key){
+  if (APPS[key].kind==='maker') return openMaker();
+  let el = document.getElementById('win-'+key);
+  if (!el){
+    const a = APPS[key];
+    el = document.createElement('div'); el.className='win os-win'; el.id='win-'+key;
+    let body;
+    if (a.kind==='explorer'){
+      const files = FILES[a.path] || [];
+      body = `<div class="os-side">${['Home','Desktop','Documents','Downloads','This PC'].map(s=>`<div class="${a.path.startsWith(s)||a.name===s?'on':''}">${s==='This PC'?IC.pc:IC.folder}${s}</div>`).join('')}</div>
+        <div class="os-main"><div class="crumb">${esc(a.path)}</div>
+          <div class="os-row h"><span>Name</span><span>Date modified</span><span>Size</span></div>
+          ${files.length?files.map(f=>`<div class="os-row"><span>${FILE_IC[f[1]]}${esc(f[0])}</span><span>9/9/2026 06:12</span><span>${f[2]}</span></div>`).join(''):'<div style="color:#777;padding:24px 8px">This folder is empty.</div>'}</div>`;
+    } else body = `<div class="os-app">${a.icon}<div>${a.name} — ไม่ได้อยู่ในขอบเขตของต้นแบบนี้</div></div>`;
+    el.innerHTML = `<div class="os-head"><div class="t">${a.kind==='explorer'?IC.folder:a.icon}${esc(a.kind==='explorer'?a.path.split(' › ').pop()+' - File Explorer':a.name)}</div>
+      <div class="os-ctl"><button data-wmin>${ctlSvg.min}</button><button data-wmax>${ctlSvg.max}</button><button class="x" data-wclose>${ctlSvg.x}</button></div></div>
+      <div class="os-body">${body}</div>`;
+    $('#windows').appendChild(el);
+    makeDraggable(el, el.querySelector('.os-head'));
+    makeResizable(el, 480, 300);
+    place(el);
+  }
+  el.classList.remove('hidden'); focusWin(el);
+}
+function updateTaskbar(){
+  const wins = [...document.querySelectorAll('.win:not(.hidden)')];
+  const top = wins.sort((a,b)=>(+b.style.zIndex||0)-(+a.style.zIndex||0))[0];
+  document.querySelectorAll('[data-tb]').forEach(b => {
+    const k=b.dataset.tb;
+    const match = w => k==='ms' ? w.id==='app' : k==='edge' ? w.id==='maker' : k==='explorer' ? w.id.startsWith('win-') && APPS[w.id.slice(4)].kind==='explorer' : w.id==='win-'+k;
+    b.classList.toggle('open', wins.some(match));
+    b.classList.toggle('active', !!top && match(top) && !widget().classList.contains('front'));
+  });
+}
+
+/* ---------- Morning Spark ---------- */
+function badges(a, sm){
+  const t = TYPE[a.type];
+  let h = `<div class="badges${sm?' sm':''}"><span class="badge type"><img src="${A}${sm?t.wicon:t.icon}" alt="">${t.label}</span>`;
+  if (a.status==='update') h += `<span class="badge update">อัปเดต</span>`;
+  if (a.status==='cancel') h += `<span class="badge cancel">ยกเลิกใช้ ${a.cancel}</span>`;
+  return h + '</div>';
+}
+const unreadCount = () => ARTICLES.filter(a=>!a.read).length;
+function renderWidget(){
+  document.querySelectorAll('[data-unread]').forEach(el=>{ const n=unreadCount(); el.textContent=n; if (el.classList.contains('dot')) el.classList.toggle('hidden', n===0); });
+  const items = ARTICLES.filter(a=>!a.read);
+  $('#w-list').innerHTML = items.length ? items.map(a=>`
+    <button class="w-card${a.imp?' imp':''}" data-open="${a.id}">
+      ${badges(a,true)}<div class="title">${esc(a.title)}</div>
+    </button>`).join('') : `<div class="w-empty">อ่านครบทุกประกาศแล้ว 🎉</div>`;
+}
+
+function vLogin(){
+  return `<div class="login screen">
+    <img class="d1" src="${A}login-deco-1.svg" alt="">
+    <img class="d2" src="${A}login-deco-2.svg" alt="">
+    <div class="modal">
+      <img class="bg" src="${A}login-modal-bg.svg" alt="">
+      <form class="inner" id="login-form" novalidate>
+        <div class="m-logo"><span><img src="${A}logo-sun-orange.svg" alt=""></span>Morning Spark</div>
+        <div class="m-desc"><h2>เข้าสู่ระบบ</h2><p>เพื่อเริ่มต้นใช้งาน Morning Spark</p></div>
+        <div class="form">
+          <div class="field" id="f-id"><label>รหัสพนักงาน (Employee AD) <i>*</i></label>
+            <div class="input"><input id="emp" placeholder="กรอกรหัสพนักงาน (Employee AD)" autocomplete="off"></div>
+            <div class="msg">กรุณากรอกรหัสพนักงาน</div></div>
+          <div class="field" id="f-pw"><label>รหัสผ่าน <i>*</i></label>
+            <div class="input"><input id="pw" type="password" placeholder="กรอกรหัสผ่าน"><button type="button" id="eye" aria-label="แสดงรหัสผ่าน"><img src="${A}icon-eye.svg" alt=""></button></div>
+            <div class="msg">กรุณากรอกรหัสผ่าน</div></div>
+          <button class="btn-primary" type="submit">เข้าสู่ระบบ <img src="${A}icon-chevron-right.svg" alt=""></button>
+        </div>
+        <div class="version">Version 0.1.0 <img src="${A}dot.svg" alt=""> Build 20260520020402</div>
+      </form>
+    </div>
+    <img class="ktb" src="${A}ktb-logo-white.png" alt="Krungthai">
+  </div>`;
+}
+
+function filtered(){
+  const q = state.q.trim().toLowerCase();
+  return ARTICLES.filter(a =>
+    (state.type==='all' || a.type===state.type) &&
+    (state.read==='all' || (state.read==='unread' ? !a.read : a.read)) &&
+    (state.status==='all' || a.status===state.status) &&
+    (!q || (a.title+' '+a.ex+' '+a.summary).toLowerCase().includes(q)));
+}
+function card(a){
+  const cal = a.imp ? 'icon-calendar-orange.svg' : 'icon-calendar-blue.svg';
+  return `<button class="card ${a.imp?'imp':'gen'}${a.read?'':' unread'}" data-open="${a.id}">
+    <div class="top">${badges(a)}<span class="date">${a.date}</span></div>
+    <div class="body"><h3>${esc(a.title)}</h3>
+      <span class="date"><img src="${A}${cal}" alt="">${a.eff}</span>
+      ${a.ex?`<p>${esc(a.ex)}</p>`:''}</div>
+  </button>`;
+}
+function vFeed(){
+  const list = filtered(), imp = list.filter(a=>a.imp), gen = list.filter(a=>!a.imp);
+  const chip = (v,label,icon,iconOn) => `<button class="chip${state.type===v?' on':''}" data-type="${v}"><img src="${A}${state.type===v?iconOn:icon}" alt="">${label}</button>`;
+  const sec = (cls,icon,label,items) => `<div class="section">
+    <div class="sec-name ${cls}"><div class="l"><img src="${A}${icon}" alt="">${label}</div>
+      <div class="r"><span class="num">${items.filter(a=>!a.read).length}</span>ยังไม่อ่าน</div></div>
+    ${items.length ? items.map(card).join('') : '<div class="empty">ไม่พบประกาศที่ตรงกับเงื่อนไข</div>'}</div>`;
+  return `<div class="feed screen"><img class="hbg" src="${A}homefeed-header-bg.svg" alt="">
+    <div class="feed-content">
+      <form class="search" id="search">
+        <h1>ค้นหาประกาศใน Morning Spark</h1>
+        <div class="row">
+          <div class="input"><img src="${A}icon-search.svg" alt=""><input id="q" value="${esc(state.q)}" placeholder="ค้นหาชื่อ หรือข้อมูลในประกาศ"></div>
+          <button class="btn-primary" type="submit">ค้นหา</button>
+        </div>
+        <div class="filters">
+          <div class="chips">
+            ${chip('all','ประเภททั้งหมด','icon-doc-blue.svg','icon-doc-blue.svg')}
+            ${chip('product','ผลิตภัณฑ์','icon-tag-gray.svg','icon-tag-blue.svg')}
+            ${chip('practice','ข้อปฎิบัติ','icon-newspaper-gray.svg','icon-newspaper-blue.svg')}
+          </div>
+          <div class="dropdowns">
+            <label class="select"><select id="f-read">
+              <option value="all">ประกาศทั้งหมด</option><option value="unread">ยังไม่อ่าน</option><option value="read">อ่านแล้ว</option>
+            </select><img src="${A}icon-chevron-up.svg" alt=""></label>
+            <label class="select"><select id="f-status">
+              <option value="all">สถานะทั้งหมด</option><option value="update">อัปเดต</option><option value="cancel">ยกเลิกใช้</option>
+            </select><img src="${A}icon-chevron-up.svg" alt=""></label>
+            <button type="button" class="ghost" id="clear">ล้างตัวกรอง</button>
+          </div>
+        </div>
+      </form>
+      ${sec('imp','icon-megaphone.svg','ประกาศสำคัญ',imp)}
+      ${sec('gen','icon-doc-white.svg','ประกาศที่อัปเดต',gen)}
+      <div class="pager">
+        ${pagerHTML(state.page, 7, 'page')}
+      </div>
+    </div></div>`;
+}
+
+// Download glyph (not exported from Figma), drawn to match the outline icon set
+const DL_ICON = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e87cb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0l-4.5-4.5M12 15l4.5-4.5M4 17v2a1 1 0 001 1h14a1 1 0 001-1v-2"/></svg>`;
+function poster(p, a){
+  const c = a.contacts[0];
+  return `<div class="poster"><div class="p-top">
+      <div class="p-brand"><span><img src="${A}logo-sun-white.svg" alt="">Morning Spark</span><i>${TYPE[a.type].label}</i></div>
+      <small>${esc(p.sub)}</small><h2>${esc(p.title)}</h2></div>
+    <ol class="p-pts">${p.points.map(t=>`<li>${esc(t)}</li>`).join('')}</ol>
+    <div class="p-foot"><b>${a.eff}</b>${esc(c.unit)} โทร ${esc(c.tel)}</div></div>`;
+}
+function vDetail(){
+  const a = state.article;
+  const tab = (k,icon,label) => `<button class="tab${state.tab===k?' on':''}" data-tab="${k}"><img src="${A}${icon}" alt="">${label}</button>`;
+  let body;
+  if (state.tab==='summary'){
+    body = `<div class="box"><div class="t"><img src="${A}icon-pin.svg" alt="">สรุปประกาศ</div><p>${esc(a.summary)}</p></div>
+      ${a.groups.map(g=>`<div class="group"><div class="gh">${esc(g.group)}</div>
+        ${g.docs.map(d=>`<div class="doc"><div class="dh"><img src="${A}file-graphic.svg" alt="">
+            <button class="link" data-doc="${esc(d.name)}"><span>${esc(d.name)}</span></button>
+            ${d.rows?`<button class="acc" aria-label="ย่อ/ขยาย"><img src="${A}icon-chevron-up.svg" alt=""></button>`:''}</div>
+          ${d.rows?`<div class="rows">${d.rows.map(r=>`<div class="r"><div class="c"><b>${esc(r.ref)}</b>${esc(r.detail)}</div><div class="s">${esc(r.note)}</div></div>`).join('')}</div>`:''}
+        </div>`).join('')}</div>`).join('')}
+      <div class="box contact"><div class="t"><img src="${A}icon-phone.svg" alt="">สอบถามข้อมูลเพิ่มเติม</div>
+        <ul>${a.contacts.map(c=>`<li>${esc(c.unit)}<span>${esc(c.tel)}</span></li>`).join('')}</ul></div>`;
+  } else {
+    const items = a.images ? a.images.map(f=>({img:f})) : (a.posters||[]).map(p=>({p}));
+    const i = state.img, it = items[i];
+    const view = x => x.img ? `<img src="${x.img.includes('/')?x.img:A+x.img}" alt="">` : poster(x.p, a);
+    body = !items.length ? `<div class="empty">ประกาศนี้ไม่มีข้อมูลรูปภาพ</div>` : `<div><div class="ig-bar"><div class="n"><img src="${A}icon-photo-tab.svg" alt="">${esc(a.igName)}</div>
+        <button class="btn-sec" id="dl-all">${DL_ICON}ดาวน์โหลดทั้งหมด</button></div>
+      <div class="ig"><div class="main">${view(it)}<span class="pg">${i+1}/${items.length}</span></div>
+        <div class="thumbs"><button class="nav" data-img="prev" ${i===0?'disabled':''}><img src="${A}icon-chevron-left.svg" alt=""></button>
+          <div class="list">${items.map((x,k)=>`<button class="th${k===i?' on':''}" data-img="${k}"><span class="im">${view(x)}<span class="dl" data-dl="${k}">${DL_ICON}</span></span>อัปเดตล่าสุด: ${a.date.split(' ')[1]}</button>`).join('')}</div>
+          <button class="nav" data-img="next" ${i===items.length-1?'disabled':''}><img src="${A}icon-chevron-right-sm.svg" alt=""></button></div>
+      </div></div>`;
+  }
+  return `<div class="detail screen"><img class="d1" src="${A}detail-deco-1.svg" alt=""><img class="d2" src="${A}detail-deco-2.svg" alt="">
+    <div class="sheet">
+      <div class="a-head"><img class="deco" src="${A}article-header-deco.svg" alt="">
+        <div class="row">${badges(a)}<span class="date">${a.date}</span></div>
+        <h1>${esc(a.title)}</h1>
+        <span class="date"><img src="${A}icon-calendar-blue.svg" alt="">${a.eff}</span></div>
+      <div class="a-body"><div class="tabs">${tab('summary','icon-doc-tab-active.svg','ข้อมูลสรุป')}${tab('images','icon-photo-tab.svg','ข้อมูลรูปภาพ')}</div>${body}</div>
+    </div></div>`;
+}
+
+function appEl(){
+  let el = $('#app'); if (el) return el;
+  el = document.createElement('div'); el.className='win hidden'; el.id='app';
+  el.innerHTML = `<header class="app-head">
+      <div class="brand">
+        <button class="back hidden" id="back" aria-label="กลับ"><img src="${A}icon-back-white.svg" alt=""></button>
+        <span class="logo"><img src="${A}logo-sun-white.svg" alt=""></span>Morning spark
+      </div>
+      <div class="ctl">
+        <button data-go="minimize" aria-label="ย่อ"><img src="${A}win-minimize.svg" alt=""></button>
+        <button id="max" aria-label="ขยาย"><img src="${A}win-maximize.svg" alt=""></button>
+        <button data-go="close" aria-label="ปิด"><img src="${A}win-close.svg" alt=""></button>
+      </div>
+    </header><div class="app-body" id="body"></div>`;
+  $('#windows').appendChild(el);
+  makeDraggable(el, el.querySelector('.app-head'));
+  makeResizable(el, 640, 460);
+  return el;
+}
+function render(){
+  const b = $('#body');
+  b.innerHTML = state.screen==='login' ? vLogin() : state.screen==='feed' ? vFeed() : vDetail();
+  $('#back').classList.toggle('hidden', state.screen!=='detail');
+  if (state.screen==='feed'){ $('#f-read').value=state.read; $('#f-status').value=state.status; }
+  renderWidget();
+}
+function go(screen, opts={}){ Object.assign(state, opts, {screen}); render(); $('#body').scrollTop=0; }
+function openApp(target){
+  const el = appEl(); el.classList.remove('hidden'); place(el); focusWin(el);
+  if (!state.loggedIn){ state.next = target; go('login'); setTimeout(()=>$('#emp')?.focus(),50); return; }
+  target ? openArticle(target) : (state.screen==='login' ? go('feed') : render());
+}
+function openArticle(id){
+  const a = ARTICLES.find(x=>x.id===id); a.read = true;
+  go('detail', {article:a, tab:'summary', img:0});
+}
+function hideApp(){ $('#app').classList.add('hidden'); renderWidget(); updateTaskbar(); }
+
+/* ---------- Events ---------- */
+// Focus/z-order: pressing on a window raises it; pressing the widget raises the widget
+document.addEventListener('pointerdown', e => {
+  const w = e.target.closest('.win, #widget'); if (w) focusWin(w);
+  if (!e.target.closest('.d-icon')) document.querySelectorAll('.d-icon.sel').forEach(x=>x.classList.remove('sel'));
+}, true);
+document.addEventListener('click', e => {
+  const t = e.target.closest('button,[data-go]'); if (!t) return;
+  if (t.classList.contains('d-icon')){
+    document.querySelectorAll('.d-icon.sel').forEach(x=>x.classList.remove('sel')); t.classList.add('sel');
+    // Single click opens (friendlier for demos than the Windows double-click)
+    const k = t.dataset.app; return k==='ms' ? openApp(null) : openOsWin(k);
+  }
+  if (t.id==='hint-x') return $('#hint').remove();
+  if (t.id==='tb-start') return toast('Start menu ไม่ได้อยู่ในขอบเขตของต้นแบบนี้');
+  if (t.dataset.tb){
+    const k=t.dataset.tb;
+    if (k==='ms'){ const el=$('#app'); return el && !el.classList.contains('hidden') && t.classList.contains('active') ? hideApp() : openApp(null); }
+    return openOsWin(k==='explorer'?'docs':k);
+  }
+  const osw = t.closest('.os-win');
+  if (osw && t.dataset.wclose!==undefined){ osw.remove(); return updateTaskbar(); }
+  if (osw && t.dataset.wmin!==undefined){ osw.classList.add('hidden'); return updateTaskbar(); }
+  if (osw && t.dataset.wmax!==undefined) return osw.classList.toggle('max');
+  if (t.dataset.go==='open') return openApp(null);
+  if (t.dataset.go==='minimize') return hideApp();
+  if (t.dataset.go==='close'){ state.loggedIn=false; state.screen='login'; return hideApp(); }
+  if (t.id==='max') return $('#app').classList.toggle('max');
+  if (t.id==='w-toggle') return widget().classList.toggle('collapsed');
+  if (t.id==='back') return go('feed');
+  if (t.dataset.open) return $('#app')?.classList.contains('hidden')!==false || state.screen==='login' ? openApp(+t.dataset.open) : (focusWin($('#app')), openArticle(+t.dataset.open));
+  if (t.id==='eye'){ const p=$('#pw'); p.type = p.type==='password'?'text':'password'; return; }
+  if (t.dataset.type){ state.type=t.dataset.type; return render(); }
+  if (t.id==='clear'){ Object.assign(state,{q:'',type:'all',read:'all',status:'all'}); return render(); }
+  if (t.dataset.page){ const p=t.dataset.page; state.page = p==='prev'?Math.max(1,state.page-1):p==='next'?Math.min(7,state.page+1):+p; render(); return toast('ตัวอย่างข้อมูลมีแค่หน้าแรกนะ'); }
+  if (t.dataset.tab){ state.tab=t.dataset.tab; return render(); }
+  if (t.classList.contains('acc')) return t.closest('.doc').classList.toggle('closed');
+  if (t.dataset.doc) return toast(`เปิดเอกสาร “${t.dataset.doc}” (PDF จาก Intranet)`);
+  if (t.id==='dl-all') return toast('ดาวน์โหลดรูปภาพทั้งหมดลงเครื่องแล้ว');
+  if (e.target.closest('[data-dl]')) return toast('ดาวน์โหลดรูปภาพแล้ว');
+  if (t.dataset.img){ const v=t.dataset.img; state.img = v==='prev'?state.img-1:v==='next'?state.img+1:+v; return render(); }
+});
+document.addEventListener('submit', e => {
+  e.preventDefault();
+  if (e.target.id==='login-form'){
+    const id=$('#emp').value.trim(), pw=$('#pw').value;
+    $('#f-id').classList.toggle('err', !id); $('#f-pw').classList.toggle('err', !pw);
+    if (!id || !pw) return;
+    state.loggedIn = true;
+    const n = state.next; state.next = null;
+    n ? openArticle(n) : go('feed');
+  }
+  if (e.target.id==='search'){ state.q=$('#q').value; render(); }
+});
+document.addEventListener('change', e => {
+  if (e.target.id==='f-read'){ state.read=e.target.value; render(); }
+  if (e.target.id==='f-status'){ state.status=e.target.value; render(); }
+});
+
+/* ---------- DS dropdown: every <select> opens the Select-overflow menu instead of the native one ---------- */
+let dd = null;
+function closeDD(){ if (!dd) return; dd.wrap.classList.remove('dd-open'); dd.el.remove(); dd = null; }
+function openDD(sel){
+  if (dd?.sel===sel) return closeDD();
+  closeDD();
+  const wrap = sel.closest('.sel,.select') || sel, r = wrap.getBoundingClientRect();
+  const el = document.createElement('div'); el.className = 'dd'; el.setAttribute('role','listbox');
+  el.innerHTML = `<div class="dd-list">${[...sel.options].map((o,i) => `<button type="button" class="dd-it${o.value===sel.value&&o.value!==''?' on':''}${o.value===''?' ph':''}" data-i="${i}" ${o.disabled?'disabled':''} role="option">${esc(o.text)}</button>`).join('')}</div>`;
+  document.body.appendChild(el);
+  const h = el.offsetHeight, below = innerHeight - 48 - r.bottom;
+  Object.assign(el.style, {left:r.left+'px', minWidth:Math.max(r.width,140)+'px', maxWidth:Math.max(r.width,360)+'px',
+    top: (below < h+8 && r.top > h+8 ? r.top-h-4 : r.bottom+4)+'px'});
+  el.addEventListener('click', e => {
+    e.stopPropagation();
+    const b = e.target.closest('.dd-it'); if (!b || b.disabled) return;
+    const o = sel.options[+b.dataset.i]; closeDD();
+    if (sel.value !== o.value){ sel.value = o.value; sel.dispatchEvent(new Event('input',{bubbles:true})); sel.dispatchEvent(new Event('change',{bubbles:true})); }
+  });
+  wrap.classList.add('dd-open');
+  dd = {el, sel, wrap};
+  el.querySelector('.on')?.scrollIntoView({block:'nearest'});
+}
+document.addEventListener('mousedown', e => {
+  const s = e.target.closest('select');
+  if (s && !s.disabled){ e.preventDefault(); s.focus(); openDD(s); return; }
+  if (dd && !e.target.closest('.dd')) closeDD();
+}, true);
+document.addEventListener('keydown', e => {
+  const s = e.target.closest?.('select');
+  if (s && !dd && [' ','Enter','ArrowDown'].includes(e.key)){ e.preventDefault(); openDD(s); return; }
+  if (!dd) return;
+  const items = [...dd.el.querySelectorAll('.dd-it:not(:disabled)')]; let k = items.findIndex(b=>b.classList.contains('kb'));
+  if (k<0) k = items.findIndex(b=>b.classList.contains('on'));
+  if (e.key==='Escape'){ e.preventDefault(); closeDD(); }
+  else if (e.key==='ArrowDown' || e.key==='ArrowUp'){ e.preventDefault(); items.forEach(b=>b.classList.remove('kb')); const n = items[Math.max(0,Math.min(items.length-1,k+(e.key==='ArrowDown'?1:-1)))]; n.classList.add('kb'); n.scrollIntoView({block:'nearest'}); }
+  else if (e.key==='Enter' && k>=0){ e.preventDefault(); items[k].click(); }
+}, true);
+addEventListener('resize', closeDD);
+document.addEventListener('scroll', e => { if (dd && !dd.el.contains(e.target)) closeDD(); }, true);
+
+renderDesktop();
+makeDraggable(widget(), $('.w-head'));
+renderWidget(); updateTaskbar();
+</script>
+<script src="maker.js"></script>
+</body>
+</html>
