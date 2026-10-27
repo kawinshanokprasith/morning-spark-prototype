@@ -853,14 +853,17 @@ function vDetail(){
     body = `<div class="box"><div class="t"><img src="${A}icon-pin.svg" alt="">สรุปประกาศ</div><p>${esc(a.summary)}</p></div>
       ${a.groups.map(g=>`<div class="group"><div class="gh">${esc(g.group)}</div>
         ${g.docs.map(d=>`<div class="doc"><div class="dh"><img src="${A}file-graphic.svg" alt="">
-            <button class="link" data-doc="${esc(d.name)}"><span>${esc(d.name)}</span></button>
+            <button class="link" data-doc="${esc(d.name)}"><span>${esc(d.name)}</span></button>${d.cancelled?'<span class="badge cancel">ยกเลิกใช้</span>':''}
             ${d.rows?`<button class="acc" aria-label="ย่อ/ขยาย"><img src="${A}icon-chevron-up.svg" alt=""></button>`:''}</div>
           ${d.rows?`<div class="rows">${d.rows.map(r=>`<div class="r"><div class="c"><b>${esc(r.ref)}</b>${esc(r.detail)}</div><div class="s">${esc(r.note)}</div></div>`).join('')}</div>`:''}
         </div>`).join('')}</div>`).join('')}
       <div class="box contact"><div class="t"><img src="${A}icon-phone.svg" alt="">สอบถามข้อมูลเพิ่มเติม</div>
         <ul>${a.contacts.map(c=>`<li>${esc(c.unit)}<span>${esc(c.tel)}</span></li>`).join('')}</ul></div>`;
   } else {
-    const items = a.images ? a.images.map(f=>({img:f})) : (a.posters||[]).map(p=>({p}));
+    // Maker can replace or cancel an infographic (maker-library.js); cancelled ones are hidden here
+    const ov = typeof LIB!=='undefined' ? LIB.imgs : {};
+    const items = (a.images ? a.images.map(f=>({img:f})) : (a.posters||[]).map(p=>({p})))
+      .map((x,k) => { const o = ov[a.id+':'+k]; return o?.cancelled ? null : o?.src ? {img:o.src} : x; }).filter(Boolean);
     const i = state.img, it = items[i];
     const view = x => x.img ? `<img src="${x.img.includes('/')?x.img:A+x.img}" alt="">` : poster(x.p, a);
     body = !items.length ? `<div class="empty">ประกาศนี้ไม่มีข้อมูลรูปภาพ</div>` : `<div><div class="ig-bar"><div class="n"><img src="${A}icon-photo-tab.svg" alt="">${esc(a.igName)}</div>
@@ -1025,5 +1028,6 @@ makeDraggable(widget(), $('.w-head'));
 renderWidget(); updateTaskbar();
 </script>
 <script src="maker.js"></script>
+<script src="maker-library.js"></script>
 </body>
 </html>

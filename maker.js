@@ -6,9 +6,10 @@ const ME = 'Kamolchanok P.';
 const AUTHORS = ['Sorrawit J.', 'Kamolchanok P.', 'Sirin W.'];
 const GROUP_LOCKED = 'กลุ่มทำกับงานกฎเกณฑ์';
 const GROUPS = ['สาขา: บริหารภาพรวม', 'สาขา: สินเชื่อ', 'สาขา: บริการลูกค้า/ การขาย', 'สาขา: บริการลูกค้า', 'สำนักงานเขต: บริหารภาพรวม', 'Branch Call Center'];
-const DOC_TYPES = ['ระเบียบ', 'คู่มือ', 'นโยบาย', 'หนังสือเวียน', 'ประกาศ', 'แบบฟอร์ม', 'Sales sheet', 'กฎหมาย', 'อื่นๆ'];
+// Document types and image sources follow the Iteration 2 filter lists in Figma
+const DOC_TYPES = ['ระเบียบ', 'คู่มือ', 'นโยบาย', 'นว.', 'คำสั่ง ธ.', 'ฟอร์ม', 'คู่มือการขาย (Sales Sheet)', 'อื่นๆ'];
 const DOC_STATUS = ['ใหม่', 'อัปเดต', 'ยกเลิก', 'เหมือนเดิม'];
-const IMG_SOURCES = ['เรื่องเด่นเรื่องเด็ด', 'NRR พาให้รู้', 'Branch Communication', 'ฝ่ายผลิตภัณฑ์'];
+const IMG_SOURCES = ['CLMG POST', 'เรื่องเด่นเรื่องเด็ด', 'สรุปสั้นทันใจ', 'NRR พารู้', 'อื่นๆ'];
 const STATUS_LABEL = {published:'เผยแพร่แล้ว', scheduled:'กำหนดเผยแพร่', draft:'ฉบับร่าง', expired:'หมดอายุ', recalled:'ยกเลิกใช้'};
 const UPLOAD_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="#1a1e28" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18a4.5 4.5 0 01-.6-8.96A6 6 0 0118 9a4 4 0 01-1 7.9"/><path d="M12 12v9m0-9l-3 3m3-3l3 3"/></svg>`;
 
@@ -19,7 +20,7 @@ const toBE = d => `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()+
 const clock = () => { const d = new Date(); return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`; };
 const daysBetween = (a,b) => Math.round((parseBE(b)-parseBE(a))/864e5);
 const splitEff = eff => { const m = (eff||'').replace('เริ่มใช้','').trim().split(' - '); return {start:(m[0]||'').trim(), end:(m[1]||'').trim()}; };
-const guessType = n => DOC_TYPES.find(t => n.includes(t)) || (/พ\.ร\.[กบ]/.test(n)?'กฎหมาย':/ฟอร์ม|Form/i.test(n)?'แบบฟอร์ม':/ตาราง|สคริปต์|Checklist|รายการ/.test(n)?'คู่มือ':'อื่นๆ');
+const guessType = n => /Sales sheet/i.test(n) ? 'คู่มือการขาย (Sales Sheet)' : n.includes('ระเบียบ') ? 'ระเบียบ' : (n.includes('คู่มือ') || /Checklist|ตาราง|สคริปต์|รายการ/.test(n)) ? 'คู่มือ' : n.includes('นโยบาย') ? 'นโยบาย' : n.includes('หนังสือเวียน') ? 'นว.' : /ประกาศ|พ\.ร\.[กบ]|คำสั่ง/.test(n) ? 'คำสั่ง ธ.' : /ฟอร์ม|Form/i.test(n) ? 'ฟอร์ม' : 'อื่นๆ';
 const docUrl = n => 'https://intranet.krungthai/compliance/docs/' + encodeURIComponent(n) + '.pdf';
 
 /* ---------- Seed rows (published articles mirror the Receiver data) ---------- */
@@ -177,35 +178,7 @@ function rowHtml(r){
     <div class="acts">${acts}</div>
   </div>`;
 }
-function docIndex(){
-  const map = new Map();
-  MK.rows.forEach(r => { const a = art(r); if (!a) return;
-    a.groups.forEach(g => g.docs.forEach(d => {
-      if (!map.has(d.name)) map.set(d.name, {name:d.name, type:guessType(d.name), uses:[]});
-      map.get(d.name).uses.push(r);
-    }));
-  });
-  return [...map.values()];
-}
-function vDocs(){
-  const q = M.q.trim().toLowerCase();
-  const docs = docIndex().filter(d => !q || d.name.toLowerCase().includes(q));
-  return searchBar('ค้นหาชื่อเอกสาร') + `<div class="dlist">${docs.map((d,i)=>`<div class="dcard${M.open['d'+d.name]?'':' closed'}">
-      <div class="dh"><img src="${A}file-graphic.svg" alt=""><div class="nm"><b>${esc(d.name)}</b><small>${d.type} · แนบอยู่ใน ${d.uses.length} ประกาศ</small></div>
-        <button class="acc" data-open-key="d${esc(d.name)}"><img src="${A}icon-chevron-up.svg" alt=""></button></div>
-      <div class="used">${d.uses.map(r=>{ const v=rv(r); return `<div class="u"><span>${v.ref}</span><span>${esc(v.title)}</span><span class="st ${v.mstatus}" style="justify-self:start">${STATUS_LABEL[v.mstatus]}</span><button class="ib" data-edit="${v.id}" data-tip="แก้ไขประกาศ"><img src="${MA}edit.svg" alt=""></button></div>`; }).join('')}</div>
-    </div>`).join('') || '<div class="m-empty"><b>ไม่พบเอกสาร</b></div>'}</div>`;
-}
-function vImages(){
-  const q = M.q.trim().toLowerCase(), cards = [];
-  MK.rows.forEach(r => { const a = art(r); if (!a) return;
-    if (a.images) a.images.forEach((f,i) => cards.push({name: i===0 ? a.igName : `${a.igName.replace(/\.\w+$/,'')} (${i+1}).jpg`, html:`<img src="${f.includes('/')?f:A+f}" alt="">`, r}));
-    else (a.posters||[]).forEach((p,i) => cards.push({name: (a.igName||'infographic.jpg').replace(/\.jpg$/, i?` (${i+1}).jpg`:'.jpg'), html:poster(p,a), r}));
-  });
-  const list = cards.filter(c => !q || c.name.toLowerCase().includes(q));
-  return searchBar('ค้นหาชื่อไฟล์รูปภาพ') + `<div class="igrid">${list.map(c=>`<div class="icard"><div class="pv">${c.html}</div>
-    <div class="inf"><b title="${esc(c.name)}">${esc(c.name)}</b>แนบอยู่ใน: <a data-edit="${c.r.id}">${rv(c.r).ref} · ${esc(rv(c.r).title.slice(0,40))}${rv(c.r).title.length>40?'…':''}</a></div></div>`).join('') || '<div class="m-empty"><b>ไม่พบรูปภาพ</b></div>'}</div>`;
-}
+// Document and Infographic tabs live in maker-library.js
 
 /* ---------- Create / edit form ---------- */
 const blankDoc = () => ({status:'', dtype:'', url:'', name:'', open:true, rows:[]});
@@ -365,6 +338,7 @@ function vModal(){
   if (m.kind==='published') h = `<div class="m-mod w"><div class="okic">✓</div><h3 style="justify-content:center">ตั้งเวลาเผยแพร่แล้ว</h3>
       <p style="text-align:center">“${esc(m.title)}” จะส่งถึงผู้รับ ${m.groups} กลุ่ม ในวันที่ <b>${m.date}</b> เวลา 06:00 น.</p>
       <div class="ft" style="justify-content:center"><button class="btn out" data-m="close">กลับหน้ารายการ</button><button class="btn pri" data-m="deliver">จำลองการส่งตอน 06:00 น.</button></div></div>`;
+  if (!h) h = libModal(m);
   return `<div class="m-ov">${h}</div>`;
 }
 const confirmBox = (t, p, ok, act, danger) => `<div class="m-mod"><h3><span>${t}</span><button data-m="close"><img src="${MA}b-close.svg" alt=""></button></h3><p>${p}</p>
@@ -405,7 +379,9 @@ function mClick(e){
   e.stopPropagation();
   const dtIn = e.target.closest('.dt input.txt:not(:disabled)');
   if (dtIn && !dp) return dtIn.parentElement.querySelector('button').click();
-  const t = e.target.closest('button,[data-edit],[data-m]'); if (!t) { closeMenus(e); return; }
+  const t = e.target.closest('button,[data-edit],[data-m],[data-libdoc],[data-libpreview]');
+  if (libClick(e, t)) return;
+  if (!t) { closeMenus(e); return; }
   const d = t.dataset, f = M.form;
   if (d.mwin==='min'){ $('#maker').classList.add('hidden'); return updateTaskbar(); }
   if (d.mwin==='max') return $('#maker').classList.toggle('max');
@@ -425,7 +401,7 @@ function mClick(e){
   if (d.m==='logout'){ M.modal = {kind:'logout'}; return rerender(); }
   if (d.m==='dologout'){ Object.assign(M, {loggedIn:false, view:'login', modal:null, form:null}); return mRender(); }
   if (d.m==='close'){ M.modal = null; return rerender(); }
-  if (d.mtab){ M.tab = d.mtab; M.q = M.qInput = ''; return mRender(); }
+  if (d.mtab){ M.tab = d.mtab; M.q = M.qInput = ''; LIB.menu = null; return mRender(); }
   if (d.m==='clear'){ Object.assign(M, {q:'', qInput:'', onlyUpd:false, type:'all', author:'all', status:'all', page:1}); return mRender(); }
   if (d.sort){ M.sort = {key:d.sort, dir: M.sort.key===d.sort ? -M.sort.dir : -1}; return rerender(); }
   if (d.mpage){ const pages = Math.max(1, Math.ceil(filteredRows().length/M.per)); M.page = d.mpage==='prev'?Math.max(1,M.page-1):d.mpage==='next'?Math.min(pages,M.page+1):+d.mpage; return rerender(); }
@@ -474,7 +450,9 @@ function mClick(e){
   if (d.addrow){ const [i,j] = ix(d.addrow); f.sections[i].docs[j].rows.push({ref:'', detail:'', note:''}); return changed(); }
   if (d.rmrow){ const [i,j,k] = ix(d.rmrow); f.sections[i].docs[j].rows.splice(k,1); return changed(); }
   if (d.fetch){ const doc = getP(f, d.fetch); if (!/^https?:\/\/[^\s]*intranet/i.test(doc.url)) { f.showErr = true; return rerender(); }
-    doc.name = decodeURIComponent(doc.url.split(/[/?#]/).filter(Boolean).pop()).replace(/\.\w+$/,'').replace(/[_-]+/g,' ');
+    const seg = decodeURIComponent(doc.url.split(/[/?#]/).filter(Boolean).pop() || '');
+    if (!/\.\w{2,5}$/.test(seg)){ M.modal = {kind:'nameMissing', path:d.fetch, val:'', err:''}; return rerender(); }
+    doc.name = seg.replace(/\.\w+$/,'').replace(/[_-]+/g,' ');
     if (!doc.dtype) doc.dtype = guessType(doc.name); toast('ดึงชื่อเอกสารจาก Intranet แล้ว'); return changed(); }
   if (d.m==='upload') return $('#m-file').click();
   if (d.m==='sample'){ addUploads(['info-1.png','info-2.png','info-4.png'].map((n,i)=>({name:i?`NRR พาให้รู้ Issue 36 (${i}).jpg`:'เรื่องเด่นเรื่องเด็ด 197-แนวทาง FATCA CRS.jpg', src:A+n}))); return; }
@@ -523,6 +501,7 @@ function addUploads(list){
   f.dirty = true; f.savedAt = clock(); rerender();
 }
 function mInput(e){
+  if (libInput(e)) return;
   const t = e.target;
   if (t.id==='m-q'){ M.qInput = t.value; return; }
   if (t.dataset.rd){ M.modal[t.dataset.rd] = t.value; return; }
@@ -537,6 +516,7 @@ function mInput(e){
   if (M.form.showErr){ const fe = t.closest('.fld'); if (fe && !validate(M.form)[fe.dataset.fp]) fe.classList.remove('err'); }
 }
 function mChange(e){
+  if (libChange(e)) return;
   const t = e.target, d = t.dataset;
   if (d.mf){ if (d.mf==='onlyUpd') M.onlyUpd = t.checked; else if (d.mf==='per') M.per = +t.value; else M[d.mf] = t.value; M.page = 1; return rerender(); }
   if (d.rep){ M.modal[d.rep] = t.checked; return rerender(); }
@@ -622,9 +602,10 @@ document.addEventListener('keydown', e => {
   $('#maker '+sel)?.focus();
 });
 function mDrag(e){
-  const z = e.target.closest('#m-drop'); if (!z) return;
+  const z = e.target.closest('#m-drop,#lib-drop'); if (!z) return;
   e.preventDefault(); e.stopPropagation();
   z.classList.toggle('over', e.type==='dragover');
+  if (e.type==='drop' && z.id==='lib-drop'){ const f = [...e.dataTransfer.files].find(f => /image\/(png|jpe?g)/.test(f.type)); if (f){ M.modal.up = {name:f.name, src:URL.createObjectURL(f), status:'อัปเดต', source:'อื่นๆ'}; rerender(); } return; }
   if (e.type==='drop') addUploads([...e.dataTransfer.files].filter(f => /image\/(png|jpe?g)/.test(f.type)).map(f => ({name:f.name, src:URL.createObjectURL(f)})));
 }
 // "Simulate 6:00" lives outside mClick so it can read the saved form snapshot
