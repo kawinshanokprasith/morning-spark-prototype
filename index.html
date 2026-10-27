@@ -380,9 +380,9 @@ input[type=checkbox]:disabled,input[type=radio]:disabled{background-color:var(--
 input[type=checkbox]:focus-visible,input[type=radio]:focus-visible{outline:2px solid var(--primary-bg-mid);outline-offset:2px}
 
 /* Tooltip (DS) */
-.tt{position:fixed;z-index:10000;zoom:var(--ui);max-width:260px;background:var(--gray-fg-high);color:#fff;font:12px/18px var(--font);border-radius:6px;padding:6px 10px;pointer-events:none;box-shadow:0 1px 2px rgba(27,29,31,.12)}
-.tt::after{content:"";position:absolute;left:var(--ax,50%);bottom:-4px;width:8px;height:8px;background:inherit;transform:translateX(-50%) rotate(45deg)}
-.tt.below::after{bottom:auto;top:-4px}
+.ds-tip{position:fixed;z-index:10000;zoom:var(--ui);max-width:260px;background:var(--gray-fg-high);color:#fff;font:12px/18px var(--font);border-radius:6px;padding:6px 10px;pointer-events:none;box-shadow:0 1px 2px rgba(27,29,31,.12)}
+.ds-tip::after{content:"";position:absolute;left:var(--ax,50%);bottom:-4px;width:8px;height:8px;background:inherit;transform:translateX(-50%) rotate(45deg)}
+.ds-tip.below::after{bottom:auto;top:-4px}
 
 /* Date picker (DS) */
 .dp{position:fixed;z-index:9998;zoom:var(--ui);width:256px;background:#fff;border-radius:12px;padding:12px;box-shadow:0 1px 1px rgba(27,29,31,.08),0 8px 12px rgba(27,29,31,.12);display:flex;flex-direction:column;gap:12px;font-family:var(--font);color:var(--gray-fg-high)}
@@ -586,7 +586,7 @@ document.addEventListener('mouseover', e => {
   const t = e.target.closest('[data-tip]');
   if (!t){ ttEl?.remove(); ttEl = null; return; }
   if (ttEl?._for===t) return;
-  ttEl?.remove(); ttEl = document.createElement('div'); ttEl.className = 'tt'; ttEl._for = t; ttEl.textContent = t.dataset.tip; ttEl.setAttribute('role','tooltip');
+  ttEl?.remove(); ttEl = document.createElement('div'); ttEl.className = 'ds-tip'; ttEl._for = t; ttEl.textContent = t.dataset.tip; ttEl.setAttribute('role','tooltip');
   document.body.appendChild(ttEl);
   const z = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui')) || 1;
   const r = t.getBoundingClientRect(), w = ttEl.offsetWidth*z, h = ttEl.offsetHeight*z;
