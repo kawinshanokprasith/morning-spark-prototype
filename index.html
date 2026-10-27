@@ -38,7 +38,7 @@ img{display:block}
   background:radial-gradient(ellipse 70% 60% at 55% 58%,#bfe3ff 0%,#5aa9f5 22%,#1f67d6 45%,#0c3a9a 68%,#071c54 100%)}
 #bloom{position:absolute;left:50%;top:56%;width:1500px;height:1500px;transform:translate(-50%,-50%);pointer-events:none;filter:blur(.5px)}
 /* Custom wallpaper (assets/wallpaper.jpg); the drawn bloom stays as a fallback if the file is missing */
-#desktop.has-wall{background:#c7d3e2 url(assets/wallpaper.jpg?v=10) center/cover no-repeat}
+#desktop.has-wall{background:#c7d3e2 url(assets/wallpaper-10.jpg) center/cover no-repeat}
 #desktop.has-wall #bloom{display:none}
 .icons{position:absolute;left:8px;top:8px;bottom:56px;display:grid;grid-auto-flow:column;grid-template-rows:repeat(auto-fill,100px);grid-auto-columns:88px;gap:2px;z-index:1}
 .d-icon{width:88px;height:96px;border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:4px;padding:6px 4px;color:#fff;font:12px/16px var(--os-font);text-align:center;text-shadow:0 1px 3px rgba(0,0,0,.6);border:1px solid transparent}
@@ -1020,7 +1020,7 @@ addEventListener('resize', closeDD);
 document.addEventListener('scroll', e => { if (dd && !dd.el.contains(e.target)) closeDD(); }, true);
 
 renderDesktop();
-{ const w = new Image(); w.onload = () => $('#desktop').classList.add('has-wall'); w.src = 'assets/wallpaper.jpg?v=10'; }
+{ const w = new Image(); w.onload = () => $('#desktop').classList.add('has-wall'); w.src = 'assets/wallpaper-10.jpg'; }
 makeDraggable(widget(), $('.w-head'));
 renderWidget(); updateTaskbar();
 </script>
