@@ -1,0 +1,15 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="icon / bookmark" clip-path="url(#clip0_0_3640)">
+<mask id="mask0_0_3640" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="20" height="20">
+<rect id="Bounding box" width="20" height="20" fill="#D9D9D9"/>
+</mask>
+<g mask="url(#mask0_0_3640)">
+<path id="grade" d="M5.511 11.7024L7.9999 10.2246L10.5082 11.7024L9.84713 8.90239L12.0055 7.05517L9.14713 6.80239L7.9999 4.1385L6.85267 6.80239L3.99433 7.05517L6.17211 8.90239L5.511 11.7024ZM3.39155 14.5996L4.61655 9.42739L0.533203 5.94683L5.89989 5.48017L7.9999 0.599609L10.0999 5.49961L15.4666 5.94683L11.3832 9.42739L12.6082 14.5996L7.9999 11.8579L3.39155 14.5996Z" fill="#62707E"/>
+</g>
+</g>
+<defs>
+<clipPath id="clip0_0_3640">
+<rect width="16" height="16" fill="white"/>
+</clipPath>
+</defs>
+</svg>

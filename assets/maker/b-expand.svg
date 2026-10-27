@@ -1,0 +1,15 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="icon / expand_more" clip-path="url(#clip0_0_3562)">
+<mask id="mask0_0_3562" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="20" height="20">
+<rect id="Bounding box" width="20" height="20" fill="#D9D9D9"/>
+</mask>
+<g mask="url(#mask0_0_3562)">
+<path id="expand_more" d="M10 13.0316C9.8889 13.0316 9.78127 13.0108 9.6771 12.9691C9.57293 12.9275 9.47224 12.858 9.37502 12.7608L5.60418 8.98997C5.43752 8.8233 5.36113 8.61497 5.37502 8.36497C5.3889 8.11497 5.47224 7.91358 5.62502 7.7608C5.80557 7.58025 6.0139 7.49344 6.25002 7.50039C6.48613 7.50733 6.68752 7.59414 6.85418 7.7608L10 10.9275L13.1667 7.7608C13.3333 7.59414 13.5313 7.5108 13.7604 7.5108C13.9896 7.5108 14.1945 7.60108 14.375 7.78164C14.5417 7.9483 14.625 8.15316 14.625 8.39622C14.625 8.63927 14.5417 8.84414 14.375 9.0108L10.625 12.7608C10.5278 12.858 10.4271 12.9275 10.3229 12.9691C10.2188 13.0108 10.1111 13.0316 10 13.0316Z" fill="#8990A2"/>
+</g>
+</g>
+<defs>
+<clipPath id="clip0_0_3562">
+<rect width="20" height="20" fill="white"/>
+</clipPath>
+</defs>
+</svg>
