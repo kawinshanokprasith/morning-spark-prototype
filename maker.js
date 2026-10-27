@@ -346,13 +346,13 @@ const confirmBox = (t, p, ok, act, danger) => `<div class="m-mod"><h3><span>${t}
 const repDate = (k, off) => `<div class="dt${off?' off':''}"><input class="txt" data-rd="${k}" value="${esc(M.modal[k]||'')}" placeholder="วว/ดด/ปปปป" ${off?'disabled':''}><button type="button" data-pickr="${k}" ${off?'disabled':''}><img src="${MA}calendar.svg" alt=""></button></div>`;
 
 function toArticle(f, base){
-  const imgs = f.uploads.filter(u => u.status!=='ยกเลิก').map(u => u.src);
+  const kept = f.uploads.filter(u => u.status!=='ยกเลิก'), imgs = kept.map(u => u.src);
   return {id: base?.id ?? Math.max(...ARTICLES.map(a=>a.id))+1, imp: base?.imp||false, read:false, type:f.type,
     status: base?.status||null, cancel: base?.cancel, date: (base?'อัปเดต ':'ประกาศ ') + (base?TODAY:pubDateOf(f)),
     eff: 'เริ่มใช้ ' + f.start + (f.end?' - '+f.end:''), title:f.title.trim(), ex:f.summary.slice(0,180), summary:f.summary,
-    groups: f.sections.map(s => ({group:s.title, docs:s.docs.map(d => ({name:d.name||d.url, rows: d.rows.length ? d.rows.map(r=>({ref:r.ref||'-', detail:r.detail||'-', note:r.note||'-'})) : undefined}))})),
+    groups: f.sections.map(s => ({group:s.title, docs:s.docs.map(d => ({name:d.name||d.url, status:d.status, rows: d.rows.length ? d.rows.map(r=>({ref:r.ref||'-', detail:r.detail||'-', note:r.note||'-'})) : undefined}))})),
     contacts: f.contacts.map(c=>({...c})), igName: f.uploads[0]?.name || base?.igName || '',
-    images: imgs.length ? imgs : undefined, posters: imgs.length ? undefined : (base?.posters||[])};
+    images: imgs.length ? imgs : undefined, imgTags: imgs.length ? kept.map(u => u.status) : undefined, posters: imgs.length ? undefined : (base?.posters||[])};
 }
 function vPreview(){
   const p = M.prev; if (!p) return '';

@@ -140,6 +140,10 @@ img{display:block}
 .badge.type{background:#fff;border:1px solid var(--primary-border-high);color:var(--primary-fg-highest);padding:1px 7px}
 .badge.update{background:var(--secondary-bg-mid);color:#fff}
 .badge.cancel{background:var(--red-bg-high);color:#fff}
+.badge.new{background:var(--primary-bg-mid);color:#fff}
+.doc .dh .badge{flex-shrink:0}
+.th .tg{display:flex;gap:4px;align-items:center}
+.th .tg .badge{padding:0 6px;font-size:10px;line-height:15px;border-radius:8px}
 .badges.sm .badge{padding:1px 5px;border-radius:8px;font-size:10px;line-height:14px;gap:2px}
 .badges.sm .badge.type{padding:0 4px}
 .badges.sm .badge img{width:12px;height:12px}
@@ -845,6 +849,10 @@ function poster(p, a){
     <ol class="p-pts">${p.points.map(t=>`<li>${esc(t)}</li>`).join('')}</ol>
     <div class="p-foot"><b>${a.eff}</b>${esc(c.unit)} โทร ${esc(c.tel)}</div></div>`;
 }
+// Document status from the Maker form (สถานะเอกสาร): ใหม่ / อัปเดต / ยกเลิก; "เหมือนเดิม" shows no tag
+const docTag = d => d.cancelled || d.status==='ยกเลิก' ? '<span class="badge cancel">ยกเลิกใช้</span>'
+  : d.status==='อัปเดต' ? '<span class="badge update">อัปเดต</span>' : d.status==='ใหม่' ? '<span class="badge new">ใหม่</span>' : '';
+const imgTag = t => t==='อัปเดต' ? '<span class="badge update">อัปเดต</span>' : t==='ใหม่' ? '<span class="badge new">ใหม่</span>' : '';
 function vDetail(){
   const a = state.article;
   const tab = (k,icon,label) => `<button class="tab${state.tab===k?' on':''}" data-tab="${k}"><img src="${A}${icon}" alt="">${label}</button>`;
@@ -853,7 +861,7 @@ function vDetail(){
     body = `<div class="box"><div class="t"><img src="${A}icon-pin.svg" alt="">สรุปประกาศ</div><p>${esc(a.summary)}</p></div>
       ${a.groups.map(g=>`<div class="group"><div class="gh">${esc(g.group)}</div>
         ${g.docs.map(d=>`<div class="doc"><div class="dh"><img src="${A}file-graphic.svg" alt="">
-            <button class="link" data-doc="${esc(d.name)}"><span>${esc(d.name)}</span></button>${d.cancelled?'<span class="badge cancel">ยกเลิกใช้</span>':''}
+            <button class="link" data-doc="${esc(d.name)}"><span>${esc(d.name)}</span></button>${docTag(d)}
             ${d.rows?`<button class="acc" aria-label="ย่อ/ขยาย"><img src="${A}icon-chevron-up.svg" alt=""></button>`:''}</div>
           ${d.rows?`<div class="rows">${d.rows.map(r=>`<div class="r"><div class="c"><b>${esc(r.ref)}</b>${esc(r.detail)}</div><div class="s">${esc(r.note)}</div></div>`).join('')}</div>`:''}
         </div>`).join('')}</div>`).join('')}
@@ -863,14 +871,14 @@ function vDetail(){
     // Maker can replace or cancel an infographic (maker-library.js); cancelled ones are hidden here
     const ov = typeof LIB!=='undefined' ? LIB.imgs : {};
     const items = (a.images ? a.images.map(f=>({img:f})) : (a.posters||[]).map(p=>({p})))
-      .map((x,k) => { const o = ov[a.id+':'+k]; return o?.cancelled ? null : o?.src ? {img:o.src} : x; }).filter(Boolean);
+      .map((x,k) => { const o = ov[a.id+':'+k]; return o?.cancelled ? null : {...(o?.src ? {img:o.src} : x), tag: o?.src ? 'อัปเดต' : a.imgTags?.[k]}; }).filter(Boolean);
     const i = state.img, it = items[i];
     const view = x => x.img ? `<img src="${x.img.includes('/')?x.img:A+x.img}" alt="">` : poster(x.p, a);
     body = !items.length ? `<div class="empty">ประกาศนี้ไม่มีข้อมูลรูปภาพ</div>` : `<div><div class="ig-bar"><div class="n"><img src="${A}icon-photo-tab.svg" alt="">${esc(a.igName)}</div>
         <button class="btn-sec" id="dl-all">${DL_ICON}ดาวน์โหลดทั้งหมด</button></div>
       <div class="ig"><div class="main">${view(it)}<span class="pg">${i+1}/${items.length}</span></div>
         <div class="thumbs"><button class="nav" data-img="prev" ${i===0?'disabled':''}><img src="${A}icon-chevron-left.svg" alt=""></button>
-          <div class="list">${items.map((x,k)=>`<button class="th${k===i?' on':''}" data-img="${k}"><span class="im">${view(x)}<span class="dl" data-dl="${k}">${DL_ICON}</span></span>อัปเดตล่าสุด: ${a.date.split(' ')[1]}</button>`).join('')}</div>
+          <div class="list">${items.map((x,k)=>`<button class="th${k===i?' on':''}" data-img="${k}"><span class="im">${view(x)}<span class="dl" data-dl="${k}">${DL_ICON}</span></span><span class="tg">${imgTag(x.tag)}อัปเดตล่าสุด: ${a.date.split(' ')[1]}</span></button>`).join('')}</div>
           <button class="nav" data-img="next" ${i===items.length-1?'disabled':''}><img src="${A}icon-chevron-right-sm.svg" alt=""></button></div>
       </div></div>`;
   }
