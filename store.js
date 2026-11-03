@@ -162,21 +162,34 @@ async function readerLogin(id, pw){
   const n = state.next; state.next = null;
   n && ARTICLES.some(a => a.id===n) ? openArticle(n) : go('feed');
 }
+// Which receiver group this login belongs to (tools/supabase-ms13-receivers.sql); null if not set up
+async function readerGroup(email){
+  const {data, error} = await SB.reader.from('receivers').select('grp').eq('email', email).maybeSingle();
+  return error ? undefined : data?.grp || null;   // undefined = table not created yet
+}
 async function loadReader(){
   const {data:{session}} = await SB.reader.auth.getSession();
   readerEmail = session?.user?.email || null;
   if (!session) return;
-  const {data, error} = await SB.reader.from('articles').select('id, article, updated_at')
-    .in('mstatus', ['published', 'recalled']).not('article', 'is', null).order('updated_at', {ascending:false});
+  if (readerEmail !== state.whoEmail){
+    const grp = await readerGroup(readerEmail);
+    Object.assign(state, {whoEmail:readerEmail, who:readerEmail.split('@')[0], group:grp ?? null, groupDb:grp !== undefined});
+  }
+  // The database only returns this login's group's articles (or all, before MS-13 is set up)
+  const [{data, error}, any] = await Promise.all([
+    SB.reader.from('articles').select('id, article, updated_at')
+      .in('mstatus', ['published', 'recalled']).not('article', 'is', null).order('updated_at', {ascending:false}),
+    state.groupDb ? SB.reader.rpc('any_delivered') : {data:null}]);
   if (error) return console.warn('Morning Spark: could not load articles', error.message);
-  const key = JSON.stringify(data.map(d => [d.id, d.updated_at]));
+  const key = JSON.stringify([readerEmail, any.data, data.map(d => [d.id, d.updated_at])]);
   if (key===lastReader) return;
   lastReader = key;
   const seen = readMap(), old = new Map(ARTICLES.map(a => [a.id, a]));
   const list = data.map(d => ({...d.article, id:1e5 + d.id, _seen:old.get(1e5 + d.id)?._seen}));
   list.forEach(a => { a.read = seen[a.id] === (a.rev||0); });
   await signArticles(SB.reader, list);
-  ARTICLES.splice(0, ARTICLES.length, ...(list.length ? list : DEMO));
+  // Sample articles only until real ones exist (for anyone, not just this group)
+  ARTICLES.splice(0, ARTICLES.length, ...(list.length || any.data ? list : DEMO));
   renderWidget(); updateTaskbar();
   const app = $('#app');
   if (app && !app.classList.contains('hidden') && state.screen!=='login'){

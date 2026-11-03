@@ -373,6 +373,7 @@ function toArticle(f, base){
   return {id: base?.id ?? Math.max(...ARTICLES.map(a=>a.id))+1, imp: base?.imp||false, read:false, type:f.type,
     status: base?.status||null, cancel: base?.cancel, date: (base?'อัปเดต ':'ประกาศ ') + (base?TODAY:pubDateOf(f)),
     eff: 'เริ่มใช้ ' + f.start + (f.end?' - '+f.end:''), title:f.title.trim(), ex:f.summary.slice(0,180), summary:f.summary,
+    to: f.groups.slice(),   // receiver groups (กลุ่มผู้รับ) that see it
     groups: f.sections.map(s => ({group:s.title, docs:s.docs.map(d => ({name:d.name||d.url, url:d.url, ...resolveSt(d.status, d.prev), rows: d.rows.length ? d.rows.map(r=>({ref:r.ref||'-', detail:r.detail||'-', note:r.note||'-', ...resolveSt(r.status, r.prev)})) : undefined}))})),
     contacts: f.contacts.map(c=>({...c})), igName: f.uploads[0]?.name || base?.igName || '',
     images: imgs.length ? imgs : undefined, imgStat: imgs.length ? f.uploads.map(u => resolveSt(u.status, u.prev)) : undefined, posters: imgs.length ? undefined : (base?.posters||[])};

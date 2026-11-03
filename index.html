@@ -201,6 +201,9 @@ img{display:block}
 .app-head .back:hover{background:rgba(255,255,255,.18)}
 .app-head .back img{width:20px;height:20px}
 .app-head .ctl{display:flex;height:100%}
+.app-head .who{margin-left:auto;align-self:center;display:flex;align-items:center;gap:6px;max-width:50%;margin-right:8px;padding:2px 10px;border-radius:12px;background:rgba(255,255,255,.16);font-size:12px;line-height:18px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.app-head .who span{font-weight:400;opacity:.8}
+.app-head .who.hidden{display:none}
 .app-head .ctl button{width:46px;height:100%;display:grid;place-items:center;color:#fff}
 .app-head .ctl button:hover{background:rgba(255,255,255,.14)}
 .app-head .ctl button:active{background:rgba(255,255,255,.22)}
@@ -498,7 +501,7 @@ input[type=checkbox]:focus-visible,input[type=radio]:focus-visible{outline:2px s
     <div class="h-head"><b>เริ่มทดสอบ Morning Spark</b><button id="hint-x" aria-label="ปิดคำแนะนำ" title="ปิด (เปิดใหม่ได้ที่ปุ่ม ?)">✕</button></div>
     <div class="h-row" data-hl="ms">
       <h4>พนักงานสาขา <span>(Receiver)</span></h4>
-      <p>คลิก <b>Morning Spark</b> (ไอคอน หรือ Widget)<br>รหัสพนักงาน <code>branch01</code> · รหัสผ่าน: ขอจากผู้ดูแลการทดสอบ</p>
+      <p>คลิก <b>Morning Spark</b> (ไอคอน หรือ Widget)<br>รหัสพนักงาน <code>branch01</code> (เห็นทุกประกาศ) หรือรายกลุ่ม <code>mgr01</code> <code>loan01</code> <code>sales01</code> <code>svc01</code> <code>zone01</code> <code>call01</code> · รหัสผ่าน: ขอจากผู้ดูแลการทดสอบ</p>
     </div>
     <div class="h-row" data-hl="maker">
       <h4>ผู้เขียนประกาศ <span>(Maker)</span></h4>
@@ -553,7 +556,13 @@ const A = 'assets/';
 const ONLINE = !!(window.MS_SUPABASE?.url && window.MS_SUPABASE?.key && window.supabase);
 const TYPE = {product:{label:'ผลิตภัณฑ์', icon:'icon-tag-blue.svg', wicon:'w-icon-tag.svg'}, practice:{label:'ข้อปฏิบัติ', icon:'icon-newspaper-blue.svg', wicon:'w-icon-newspaper.svg'}};
 const state = {loggedIn:false, screen:'login', next:null, article:null, tab:'summary', img:0,
-  q:'', type:'all', read:'all', status:'all', page:1};
+  q:'', type:'all', read:'all', status:'all', page:1, group:null};
+// Receiver test logins: one per Maker receiver group (กลุ่มผู้รับ); '*' sees every article.
+// Online the database decides (tools/supabase-ms13-receivers.sql); offline this list is used.
+const RECEIVERS = {branch01:'*', mgr01:'สาขา: บริหารภาพรวม', loan01:'สาขา: สินเชื่อ', sales01:'สาขา: บริการลูกค้า/ การขาย',
+  svc01:'สาขา: บริการลูกค้า', zone01:'สำนักงานเขต: บริหารภาพรวม', call01:'Branch Call Center'};
+// Articles without a group list (sample data) show for everyone
+const visible = () => ARTICLES.filter(a => !state.group || state.group==='*' || !a.to || a.to.includes(state.group));
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -812,14 +821,14 @@ function badges(a, sm){
   if (a.status==='cancel') h += `<span class="badge cancel">ยกเลิกใช้ ${a.cancel}</span>`;
   return h + '</div>';
 }
-const unreadCount = () => ARTICLES.filter(a=>!a.read).length;
+const unreadCount = () => visible().filter(a=>!a.read).length;
 function renderWidget(){
   document.querySelectorAll('[data-unread]').forEach(el=>{ const n=unreadCount(); el.textContent=n; if (el.classList.contains('dot')) el.classList.toggle('hidden', n===0); });
-  const items = ARTICLES.filter(a=>!a.read);
+  const all = visible(), items = all.filter(a=>!a.read);
   $('#w-list').innerHTML = items.length ? items.map(a=>`
     <button class="w-card${a.imp?' imp':''}" data-open="${a.id}">
       ${badges(a,true)}<div class="title">${esc(a.title)}</div>
-    </button>`).join('') : `<div class="w-empty">อ่านครบทุกประกาศแล้ว 🎉</div>`;
+    </button>`).join('') : `<div class="w-empty">${all.length ? 'อ่านครบทุกประกาศแล้ว 🎉' : 'ยังไม่มีประกาศสำหรับกลุ่มของคุณ'}</div>`;
 }
 
 function vLogin(){
@@ -840,7 +849,7 @@ function vLogin(){
             <div class="msg">กรุณากรอกรหัสผ่าน</div></div>
           <button class="btn-primary" type="submit">เข้าสู่ระบบ <img src="${A}icon-chevron-right.svg" alt=""></button>
         </div>
-        <p class="try-hint">ทดสอบ: ใช้รหัสพนักงาน <b>branch01</b> · รหัสผ่านขอจากผู้ดูแลการทดสอบ</p>
+        <p class="try-hint">ทดสอบ: ใช้รหัสพนักงาน <b>branch01</b> (ทุกกลุ่ม) หรือรายกลุ่ม <b>mgr01</b> <b>loan01</b> <b>sales01</b> <b>svc01</b> <b>zone01</b> <b>call01</b> · รหัสผ่านขอจากผู้ดูแลการทดสอบ</p>
         <div class="version">Version 0.1.0 <img src="${A}dot.svg" alt=""> Build 20260520020402</div>
       </form>
     </div>
@@ -850,7 +859,7 @@ function vLogin(){
 
 function filtered(){
   const q = state.q.trim().toLowerCase();
-  return ARTICLES.filter(a =>
+  return visible().filter(a =>
     (state.type==='all' || a.type===state.type) &&
     (state.read==='all' || (state.read==='unread' ? !a.read : a.read)) &&
     (state.status==='all' || a.status===state.status) &&
@@ -987,6 +996,7 @@ function appEl(){
         <button class="back hidden" id="back" aria-label="กลับ"><img src="${A}icon-back-white.svg" alt=""></button>
         <span class="logo"><img src="${A}logo-sun-white.svg" alt=""></span>Morning spark
       </div>
+      <div class="who hidden" id="who"></div>
       <div class="ctl">
         <button data-go="minimize" aria-label="ย่อ"><svg viewBox="0 0 10 10"><path d="M0 5.5h10" stroke="currentColor"/></svg></button>
         <button id="max" aria-label="ขยาย"><svg class="m" viewBox="0 0 10 10"><rect x=".5" y=".5" width="9" height="9" rx="1" fill="none" stroke="currentColor"/></svg><svg class="r" viewBox="0 0 10 10"><rect x=".5" y="2.5" width="7" height="7" rx="1" fill="none" stroke="currentColor"/><path d="M2.5 2.5V1.5a1 1 0 0 1 1-1h5a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1h-1" fill="none" stroke="currentColor"/></svg></button>
@@ -1002,6 +1012,10 @@ function render(){
   const b = $('#body');
   b.innerHTML = state.screen==='login' ? vLogin() : state.screen==='feed' ? vFeed() : vDetail();
   $('#back').classList.toggle('hidden', state.screen!=='detail');
+  const who = $('#who'), g = state.group;
+  who.classList.toggle('hidden', state.screen==='login' || !g);
+  who.innerHTML = g ? `<span>กลุ่มผู้รับ</span>${esc(g==='*' ? 'ทุกกลุ่ม (ผู้ดูแลการทดสอบ)' : g)}` : '';
+  who.title = state.who ? 'เข้าสู่ระบบด้วย ' + state.who : '';
   if (state.screen==='feed'){ $('#f-read').value=state.read; $('#f-status').value=state.status; }
   renderWidget();
 }
@@ -1105,6 +1119,7 @@ document.addEventListener('submit', e => {
     $('#f-id').classList.toggle('err', !id); $('#f-pw').classList.toggle('err', !pw);
     if (!id || !pw) return;
     if (ONLINE) return readerLogin(id, pw);
+    state.who = id.toLowerCase().split('@')[0]; state.group = RECEIVERS[state.who] || null;
     state.loggedIn = true;
     const n = state.next; state.next = null;
     n ? openArticle(n) : go('feed');
@@ -1163,8 +1178,8 @@ makeDraggable(widget(), $('.w-head'));
 renderWidget(); updateTaskbar();
 </script>
 <script src="browser.js?v=202611031230"></script>
-<script src="maker.js?v=202611031700"></script>
+<script src="maker.js?v=202611031900"></script>
 <script src="maker-library.js?v=202611021800"></script>
-<script src="store.js?v=202611021800"></script>
+<script src="store.js?v=202611031900"></script>
 </body>
 </html>
