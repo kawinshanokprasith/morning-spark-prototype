@@ -1,8 +1,10 @@
 // Morning Spark Maker (admin portal for NRR Compliance), shown in a browser window on the desktop.
 // Shares ARTICLES with the Receiver: publishing, editing and recalling here updates the widget and app.
 const MA = 'assets/maker/';
-const TODAY = '09/09/2569', TOMORROW = '10/09/2569';
-const ME = 'Kamolchanok P.';
+// Online (store.js) the dates are real; otherwise the prototype's "today" is fixed
+const beOf = d => `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()+543}`;
+const TODAY = ONLINE ? beOf(new Date()) : '09/09/2569', TOMORROW = ONLINE ? beOf(new Date(Date.now()+864e5)) : '10/09/2569';
+let ME = 'Kamolchanok P.'; // online: the signed-in maker's name
 const AUTHORS = ['Sorrawit J.', 'Kamolchanok P.', 'Sirin W.'];
 const GROUP_LOCKED = 'กลุ่มทำกับงานกฎเกณฑ์';
 const GROUPS = ['สาขา: บริหารภาพรวม', 'สาขา: สินเชื่อ', 'สาขา: บริการลูกค้า/ การขาย', 'สาขา: บริการลูกค้า', 'สำนักงานเขต: บริหารภาพรวม', 'Branch Call Center'];
@@ -26,11 +28,14 @@ const clock = () => { const d = new Date(); return `${pad(d.getHours())}:${pad(d
 const daysBetween = (a,b) => Math.round((parseBE(b)-parseBE(a))/864e5);
 const splitEff = eff => { const m = (eff||'').replace('เริ่มใช้','').trim().split(' - '); return {start:(m[0]||'').trim(), end:(m[1]||'').trim()}; };
 const guessType = n => /Sales sheet/i.test(n) ? 'คู่มือการขาย (Sales Sheet)' : n.includes('ระเบียบ') ? 'ระเบียบ' : (n.includes('คู่มือ') || /Checklist|ตาราง|สคริปต์|รายการ/.test(n)) ? 'คู่มือ' : n.includes('นโยบาย') ? 'นโยบาย' : n.includes('หนังสือเวียน') ? 'นว.' : /ประกาศ|พ\.ร\.[กบ]|คำสั่ง/.test(n) ? 'คำสั่ง ธ.' : /ฟอร์ม|Form/i.test(n) ? 'ฟอร์ม' : 'อื่นๆ';
+// Online, makers paste real Intranet links, so any http(s) link is accepted
+const isDocUrl = u => ONLINE ? /^https?:\/\/\S+$/i.test(u) : /^https?:\/\/[^\s]*intranet/i.test(u);
 const docUrl = n => 'https://intranet.krungthai/compliance/docs/' + encodeURIComponent(n) + '.pdf';
 
 /* ---------- Seed rows (published articles mirror the Receiver data) ---------- */
 const MK = {rows:[], seq:2};
-ARTICLES.forEach((a,i) => {
+// Online, the table shows only the makers' real articles (loaded by store.js)
+if (!ONLINE) ARTICLES.forEach((a,i) => {
   const d = 18 - i;
   MK.rows.push({id:'r'+a.id, aid:a.id, ref:`6907${pad(d)}-${String(i%3?i+1:2).padStart(3,'0')}`, mstatus:'published',
     createdBy:i%3===1?ME:'Sorrawit J.', created:`${pad(d)}/07/2569 16:16:32`, updatedBy:ME, updated:`${pad(d+1)}/07/2569 09:10:32`, ts:d+1});
@@ -42,12 +47,12 @@ ARTICLES.forEach((a,i) => {
   {ref:'690707-011', type:'product', title:'สินเชื่อ Home for cash', start:'01/08/2569', end:'12/09/2569', mstatus:'published', createdBy:'Sorrawit J.', created:'07/07/2569 16:16:32', updated:'08/07/2569 09:10:32', ts:8.5},
   {ref:'690702-003', type:'product', title:'ไทยช่วยไทยพลัส', start:'01/06/2569', end:'30/06/2569', mstatus:'expired', badge:{status:'cancel', cancel:'01/07/2569'}, createdBy:'Sorrawit J.', created:'02/07/2569 16:16:32', updated:'11/07/2569 09:10:32', ts:7.5},
   {ref:'690701-992', type:'product', title:'การเปิดบัญชีเงินฝาก Next savings (ฉบับเดิม)', start:'01/08/2569', end:'30/08/2569', mstatus:'recalled', badge:{status:'cancel', cancel:'01/07/2569'}, createdBy:'Sirin W.', created:'02/07/2569 16:16:32', updated:'09/07/2569 09:10:32', ts:6.5},
-].forEach((r,i) => MK.rows.push({id:'x'+i, updatedBy:ME, ...r}));
+].forEach((r,i) => ONLINE || MK.rows.push({id:'x'+i, updatedBy:ME, ...r}));
 
 const M = {loggedIn:false, view:'login', tab:'articles', q:'', qInput:'', onlyUpd:false, type:'all', author:'all', status:'all',
   sort:{key:'ts', dir:-1}, page:1, per:10, side:false, form:null, modal:null, prev:null, open:{}};
 
-const art = r => r.aid ? ARTICLES.find(a => a.id===r.aid) : null;
+const art = r => r.dbArt || (r.aid ? ARTICLES.find(a => a.id===r.aid) : null);
 function rv(r){ // row view: live fields from the shared article when there is one
   const a = art(r);
   if (!a) return {...r, badge:r.badge||{}};
@@ -189,7 +194,7 @@ function rowHtml(r){
 const blankDoc = () => ({status:'', dtype:'', url:'', name:'', open:true, rows:[]});
 const blankSection = () => ({title:'', open:true, docs:[blankDoc()]});
 function newForm(){
-  return {rowId:null, ref:`690909-D00${MK.seq++}`, mstatus:'draft', pubMode:'next', pubDate:'', groups:[GROUP_LOCKED], type:'', start:'', end:'',
+  return {rowId:null, ref: ONLINE ? newRef() : `690909-D00${MK.seq++}`, mstatus:'draft', pubMode:'next', pubDate:'', groups:[GROUP_LOCKED], type:'', start:'', end:'',
     title:'', contacts:[{unit:'', tel:''}], summary:'', sections:[blankSection()], uploads:[], tab:'summary', savedAt:clock(), showErr:false, dirty:false, groupMenu:false};
 }
 function formFromRow(r){
@@ -220,8 +225,8 @@ function validate(f){
     if (!s.title.trim()) e[`sections.${i}.title`] = 'กรุณากรอกหัวข้อเซ็กชั่น';
     s.docs.forEach((d,j) => { const p = `sections.${i}.docs.${j}`;
       if (!d.status) e[p+'.status']='กรุณาเลือก'; if (!d.dtype) e[p+'.dtype']='กรุณาเลือก';
-      if (!d.url.trim()) e[p+'.url']='กรุณากรอก Intranet URL'; else if (!/^https?:\/\/[^\s]*intranet/i.test(d.url)) e[p+'.url']='ต้องเป็นลิงก์ Intranet ของธนาคาร';
-      if (!d.name.trim() && !e[p+'.url']) e[p+'.name']='กดไอคอนค้นหาเพื่อดึงชื่อเอกสาร';
+      if (!d.url.trim()) e[p+'.url']='กรุณากรอก Intranet URL'; else if (!isDocUrl(d.url.trim())) e[p+'.url']='ต้องเป็นลิงก์ Intranet ของธนาคาร';
+      if (!d.name.trim() && (ONLINE || !e[p+'.url'])) e[p+'.name'] = ONLINE ? 'กรุณากรอกชื่อเอกสาร' : 'กดไอคอนค้นหาเพื่อดึงชื่อเอกสาร';
     });
   });
   f.uploads.forEach((u,i) => { if (!u.source) e[`uploads.${i}.source`]='กรุณาเลือกแหล่งที่มา'; });
@@ -289,11 +294,11 @@ function vSummaryTab(f){
         <button class="btn" data-rmsec="${i}" ${f.sections.length<2?'disabled':''}><img src="${MA}trash.svg" alt="">ลบเซ็กชั่น</button>
         <button class="acc" data-togsec="${i}"><img src="${A}icon-chevron-up.svg" alt=""></button></div>
       <div class="sb">${s.docs.map((d,j)=>{ const D=`${P}.docs.${j}`; return `<div class="dblk${d.open?'':' closed'}" data-di="${j}">
-          <div class="drow"><span></span>${L('สถานะเอกสาร',1)}${L('ประเภทเอกสาร',1)}${L('Intranet URL',1,'วางลิงก์เอกสารจาก Intranet แล้วกดไอคอนค้นหาเพื่อดึงชื่อเอกสาร')}${L('ชื่อเอกสาร',1,'ระบบดึงชื่อเอกสารจาก Intranet ให้อัตโนมัติ')}<span></span><span></span></div>
+          <div class="drow"><span></span>${L('สถานะเอกสาร',1)}${L('ประเภทเอกสาร',1)}${L('Intranet URL',1,'วางลิงก์เอกสารจาก Intranet แล้วกดไอคอนค้นหาเพื่อดึงชื่อเอกสาร')}${L('ชื่อเอกสาร',1, ONLINE ? 'พิมพ์ชื่อเอกสาร หรือกดไอคอนค้นหาเพื่อดึงชื่อจากลิงก์' : 'ระบบดึงชื่อเอกสารจาก Intranet ให้อัตโนมัติ')}<span></span><span></span></div>
           <div class="drow" style="margin-top:-6px">${GRIP}
             ${fld(D+'.status', fsel(D+'.status', DOC_STATUS) + prevHint(d.prev))}${fld(D+'.dtype', fsel(D+'.dtype', DOC_TYPES))}
             ${fld(D+'.url', `<div class="urlbox">${inp(D+'.url','https://intranet.krungthai/...')}<button type="button" data-fetch="${D}" data-tip="ดึงชื่อเอกสาร"><img src="${A}icon-search.svg" alt=""></button></div>`)}
-            ${fld(D+'.name', inp(D+'.name','ชื่อเอกสาร','disabled'))}
+            ${fld(D+'.name', inp(D+'.name', ONLINE ? 'พิมพ์ชื่อเอกสาร' : 'ชื่อเอกสาร', ONLINE ? '' : 'disabled'))}
             <button class="tbtn" data-rmdoc="${i}:${j}" ${s.docs.length<2?'disabled':''} data-tip="ลบเอกสาร"><img src="${MA}trash.svg" alt=""></button>
             <button class="acc" data-togdoc="${i}:${j}"><img src="${A}icon-chevron-up.svg" alt=""></button></div>
           <div class="dets">${d.rows.map((r,k)=>`<div class="det" data-ri="${k}">${GRIP}
@@ -356,7 +361,7 @@ function toArticle(f, base){
   return {id: base?.id ?? Math.max(...ARTICLES.map(a=>a.id))+1, imp: base?.imp||false, read:false, type:f.type,
     status: base?.status||null, cancel: base?.cancel, date: (base?'อัปเดต ':'ประกาศ ') + (base?TODAY:pubDateOf(f)),
     eff: 'เริ่มใช้ ' + f.start + (f.end?' - '+f.end:''), title:f.title.trim(), ex:f.summary.slice(0,180), summary:f.summary,
-    groups: f.sections.map(s => ({group:s.title, docs:s.docs.map(d => ({name:d.name||d.url, ...resolveSt(d.status, d.prev), rows: d.rows.length ? d.rows.map(r=>({ref:r.ref||'-', detail:r.detail||'-', note:r.note||'-', ...resolveSt(r.status, r.prev)})) : undefined}))})),
+    groups: f.sections.map(s => ({group:s.title, docs:s.docs.map(d => ({name:d.name||d.url, url:d.url, ...resolveSt(d.status, d.prev), rows: d.rows.length ? d.rows.map(r=>({ref:r.ref||'-', detail:r.detail||'-', note:r.note||'-', ...resolveSt(r.status, r.prev)})) : undefined}))})),
     contacts: f.contacts.map(c=>({...c})), igName: f.uploads[0]?.name || base?.igName || '',
     images: imgs.length ? imgs : undefined, imgStat: imgs.length ? f.uploads.map(u => resolveSt(u.status, u.prev)) : undefined, posters: imgs.length ? undefined : (base?.posters||[])};
 }
@@ -371,6 +376,7 @@ function vPreview(){
 
 /* ---------- Sync with Receiver ---------- */
 function refreshReceiver(){
+  if (ONLINE) return; // receivers read the saved copy (store.js reloads it after each save)
   renderWidget(); updateTaskbar?.();
   const app = $('#app');
   if (app && !app.classList.contains('hidden') && state.screen!=='login'){
@@ -405,7 +411,7 @@ function mClick(e){
   if (d.m==='side'){ M.side = !M.side; return rerender(); }
   if (d.m==='home') return f?.dirty ? (M.modal={kind:'leave'}, rerender()) : (M.view='list', M.form=null, mRender());
   if (d.m==='logout'){ M.modal = {kind:'logout'}; return rerender(); }
-  if (d.m==='dologout'){ Object.assign(M, {loggedIn:false, view:'login', modal:null, form:null}); return mRender(); }
+  if (d.m==='dologout'){ if (ONLINE) makerLogout(); Object.assign(M, {loggedIn:false, view:'login', modal:null, form:null}); return mRender(); }
   if (d.m==='close'){ M.modal = null; return rerender(); }
   if (d.mtab){ M.tab = d.mtab; M.q = M.qInput = ''; LIB.menu = null; return mRender(); }
   if (d.m==='clear'){ Object.assign(M, {q:'', qInput:'', onlyUpd:false, type:'all', author:'all', status:'all', page:1}); return mRender(); }
@@ -425,10 +431,11 @@ function mClick(e){
   if (d.del){ M.modal = {kind:'delete', row:MK.rows.find(x=>x.id===d.del)}; return rerender(); }
   if (d.m==='dorecall'){
     const r = M.modal.row, a = art(r); r.mstatus = 'recalled'; touch(r);
-    if (a) Object.assign(a, {status:'cancel', cancel:TODAY, read:false, date:'อัปเดต '+TODAY});
+    if (a) Object.assign(a, {status:'cancel', cancel:TODAY, read:false, date:'อัปเดต '+TODAY, rev:(a.rev||0)+1});
+    if (ONLINE) dbSaveRow(r);
     M.modal = null; mRender(); refreshReceiver(); return toast('เรียกคืนประกาศแล้ว ผู้รับจะเห็นสถานะ ยกเลิกใช้');
   }
-  if (d.m==='dodelete'){ MK.rows = MK.rows.filter(x=>x!==M.modal.row); M.modal = null; mRender(); return toast('ลบฉบับร่างแล้ว'); }
+  if (d.m==='dodelete'){ if (ONLINE) dbDeleteRow(M.modal.row); MK.rows = MK.rows.filter(x=>x!==M.modal.row); M.modal = null; mRender(); return toast('ลบฉบับร่างแล้ว'); }
   if (d.m==='create'){ M.form = newForm(); M.view = 'form'; return mRender(); }
 
   // ---- form ----
@@ -455,7 +462,7 @@ function mClick(e){
   if (d.mvdoc){ const [i,j,dir] = ix(d.mvdoc); const s = f.sections[i].docs; [s[j], s[j+dir]] = [s[j+dir], s[j]]; return changed(); }
   if (d.addrow){ const [i,j] = ix(d.addrow); f.sections[i].docs[j].rows.push({ref:'', detail:'', note:'', status:KEEP}); return changed(); }
   if (d.rmrow){ const [i,j,k] = ix(d.rmrow); f.sections[i].docs[j].rows.splice(k,1); return changed(); }
-  if (d.fetch){ const doc = getP(f, d.fetch); if (!/^https?:\/\/[^\s]*intranet/i.test(doc.url)) { f.showErr = true; return rerender(); }
+  if (d.fetch){ const doc = getP(f, d.fetch); if (!isDocUrl(doc.url.trim())) { f.showErr = true; return rerender(); }
     const seg = decodeURIComponent(doc.url.split(/[/?#]/).filter(Boolean).pop() || '');
     if (!/\.\w{2,5}$/.test(seg)){ M.modal = {kind:'nameMissing', path:d.fetch, val:'', err:''}; return rerender(); }
     doc.name = seg.replace(/\.\w+$/,'').replace(/[_-]+/g,' ');
@@ -465,20 +472,20 @@ function mClick(e){
   if (d.rmup){ f.uploads.splice(+d.rmup,1); return changed(); }
   if (d.m==='preview'){ const row = MK.rows.find(x=>x.id===f.rowId); const a = toArticle(f, row && art(row)); if (!a.title) a.title = '(ยังไม่มีหัวข้อประกาศ)';
     M.prev = {article:a, tab:'summary', img:0}; return rerender(); }
-  if (d.m==='draft'){ saveRow('draft'); f.dirty = false; f.savedAt = clock(); rerender(); return toast('บันทึกร่างแล้ว'); }
+  if (d.m==='draft'){ const r = saveRow('draft'); if (ONLINE) dbSaveRow(r); f.dirty = false; f.savedAt = clock(); rerender(); return toast('บันทึกร่างแล้ว'); }
   if (d.m==='publish'){
     if (Object.keys(validate(f)).length){ f.showErr = true; rerender(); toast('กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน');
       setTimeout(()=>$('#maker .fld.err')?.scrollIntoView({behavior:'smooth', block:'center'}), 30); return; }
     const row = MK.rows.find(x=>x.id===f.rowId);
     if (row && row.mstatus==='published'){ M.modal = {kind:'notify', notify:true}; return rerender(); }
-    const r = saveRow('scheduled'); r.sched = pubDateOf(f); r.ref = r.ref.replace('-D','-');
+    const r = saveRow('scheduled'); r.sched = pubDateOf(f); r.ref = r.ref.replace('-D','-'); if (ONLINE) dbSaveRow(r);
     M.modal = {kind:'published', row:r, title:f.title, date:r.sched, groups:f.groups.length}; M.view = 'list'; M.form = null; return mRender();
   }
   if (d.m==='dosaveedit'){
     const row = MK.rows.find(x=>x.id===f.rowId), a = art(row), n = toArticle(f, a), notify = M.modal.notify;
-    if (a) Object.assign(a, n, notify ? {read:false, status: a.status==='cancel'?'cancel':'update', _seen:{}} : {read:a.read, date:a.date});
+    if (a) Object.assign(a, n, notify ? {read:false, status: a.status==='cancel'?'cancel':'update', _seen:{}, rev:(a.rev||0)+1} : {read:a.read, date:a.date});
     else { ARTICLES.unshift(n); row.aid = n.id; }
-    touch(row); M.modal = null; M.view = 'list'; M.form = null; mRender(); refreshReceiver();
+    touch(row); if (ONLINE){ row._form = settledForm(f); dbSaveRow(row); } M.modal = null; M.view = 'list'; M.form = null; mRender(); refreshReceiver();
     return toast(notify ? 'บันทึกแล้ว และแจ้งเตือนผู้รับเรียบร้อย' : 'บันทึกแล้ว (ไม่แจ้งเตือนผู้รับ)');
   }
   closeMenus(e);
@@ -486,7 +493,9 @@ function mClick(e){
 function closeMenus(e){ if (M.form?.groupMenu && !e.target.closest('.ms-menu,.ms-box')){ M.form.groupMenu = false; rerender(); } }
 function mDeliver(){
   const m = M.modal, r = m.row, a = toArticle(r._form, null);
-  a.date = 'ประกาศ ' + r.sched; ARTICLES.unshift(a); r.aid = a.id; r.mstatus = 'published'; r.sched = null; delete r._form; touch(r);
+  a.date = 'ประกาศ ' + r.sched;
+  if (ONLINE){ r.dbArt = a; r._form = settledForm(r._form); r.mstatus = 'published'; r.sched = null; touch(r); dbSaveRow(r); }
+  else { ARTICLES.unshift(a); r.aid = a.id; r.mstatus = 'published'; r.sched = null; delete r._form; touch(r); }
   M.modal = null; mRender(); refreshReceiver(); focusWin(widget());
   toast('06:00 น. — ประกาศถึงผู้รับแล้ว ดูได้ที่ Widget บนเดสก์ท็อป');
 }
@@ -503,6 +512,7 @@ function addUploads(list){
     if (u.name.length > 80) return toast(`ชื่อไฟล์ “${u.name.slice(0,20)}…” ยาวเกิน 80 ตัวอักษร`);
     const source = IMG_SOURCES.find(s => u.name.includes(s.split(' ')[0])) || '';
     f.uploads.push({name:u.name, src:u.src, status:f.rowId ? 'อัปเดต' : KEEP, source, updated:TODAY});
+    if (ONLINE && u.file) uploadImage(u.file, u.src);
   });
   f.dirty = true; f.savedAt = clock(); rerender();
 }
@@ -516,7 +526,7 @@ function mInput(e){
   setP(M.form, p, t.value); M.form.dirty = true; M.form.savedAt = clock();
   const c = document.querySelector(`[data-cnt="${p}"]`);
   if (c){ const max = +c.textContent.split('/')[1]; c.textContent = `${pad(t.value.length)} /${max}`; c.parentElement.classList.toggle('over', t.value.length>max); }
-  if (/\.url$/.test(p)) setP(M.form, p.replace(/url$/,'name'), '');
+  if (/\.url$/.test(p) && !ONLINE) setP(M.form, p.replace(/url$/,'name'), ''); // online, a typed name stays
   const pub = $('#m-pub'); if (pub) pub.classList.toggle('off', Object.keys(validate(M.form)).length>0);
   const auto = $('#maker .crumb .auto'); if (auto) auto.lastChild.textContent = `บันทึกอัตโนมัติ (${M.form.savedAt})`;
   if (M.form.showErr){ const fe = t.closest('.fld'); if (fe && !validate(M.form)[fe.dataset.fp]) fe.classList.remove('err'); }
@@ -528,7 +538,7 @@ function mChange(e){
   if (d.rep){ M.modal[d.rep] = t.checked; return rerender(); }
   if (d.rdate){ if (t.value){ M.modal[d.rdate] = toBE(new Date(t.value)); rerender(); } return; }
   if (d.notify!==undefined){ M.modal.notify = d.notify==='1'; return; }
-  if (t.id==='m-file'){ addUploads([...t.files].filter(f => /image\/(png|jpe?g)/.test(f.type) && f.size <= 10*1024*1024).map(f => ({name:f.name, src:URL.createObjectURL(f)}))); return; }
+  if (t.id==='m-file'){ addUploads([...t.files].filter(f => /image\/(png|jpe?g)/.test(f.type) && f.size <= 10*1024*1024).map(f => ({name:f.name, src:URL.createObjectURL(f), file:f}))); return; }
   if (!M.form) return;
   if (d.group){ const f = M.form; f.groups = t.checked ? [...f.groups, d.group] : f.groups.filter(g=>g!==d.group); f.dirty = true; return rerender(); }
   if (d.date){ if (t.value){ setP(M.form, d.date, toBE(new Date(t.value))); M.form.dirty = true; rerender(); } return; }
@@ -542,6 +552,7 @@ function mSubmit(e){
     $('#mf-id').classList.toggle('err', !id); $('#mf-pw').classList.toggle('err', !pw);
     if (!id || !pw) return;
     const b = $('#m-login-btn'); b.innerHTML = '<span class="spin"></span>'; b.disabled = true;
+    if (ONLINE) return makerLogin(id, pw);
     setTimeout(() => { M.loggedIn = true; M.view = 'list'; mRender(); }, 600);
   }
 }
@@ -612,7 +623,7 @@ function mDrag(e){
   e.preventDefault(); e.stopPropagation();
   z.classList.toggle('over', e.type==='dragover');
   if (e.type==='drop' && z.id==='lib-drop'){ const f = [...e.dataTransfer.files].find(f => /image\/(png|jpe?g)/.test(f.type)); if (f){ M.modal.up = {name:f.name, src:URL.createObjectURL(f), status:'อัปเดต', source:'อื่นๆ'}; rerender(); } return; }
-  if (e.type==='drop') addUploads([...e.dataTransfer.files].filter(f => /image\/(png|jpe?g)/.test(f.type)).map(f => ({name:f.name, src:URL.createObjectURL(f)})));
+  if (e.type==='drop') addUploads([...e.dataTransfer.files].filter(f => /image\/(png|jpe?g)/.test(f.type)).map(f => ({name:f.name, src:URL.createObjectURL(f), file:f})));
 }
 // "Simulate 6:00" lives outside mClick so it can read the saved form snapshot
 document.addEventListener('click', e => { if (e.target.closest('#maker [data-m="deliver"]')) mDeliver(); }, true);

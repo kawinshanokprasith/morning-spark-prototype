@@ -6,7 +6,7 @@
 <title>Morning Spark Prototype</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;700&display=swap" rel="stylesheet">
-<link href="maker.css?v=202610270930" rel="stylesheet">
+<link href="maker.css?v=202611021800" rel="stylesheet">
 <style>
 /* Tokens from the Morning Spark Figma file */
 :root{
@@ -23,7 +23,7 @@
   --font:"Krungthai Fast","Noto Sans Thai",system-ui,sans-serif;
   --os-font:"Segoe UI Variable","Segoe UI","Noto Sans Thai",system-ui,sans-serif;
   /* UI scale: Figma sizes x this factor */
-  --ui:1.12;
+  --ui:1;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
@@ -46,6 +46,8 @@ img{display:block}
 .d-icon .lbl{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .d-icon:hover{background:rgba(255,255,255,.12)}
 .d-icon.sel{background:rgba(255,255,255,.22);border-color:rgba(255,255,255,.35)}
+/* Desktop drag-select rectangle (Windows 11 look) */
+#marquee{position:absolute;display:none;z-index:1;pointer-events:none;background:rgba(0,120,215,.38);border:1px solid #0078d7;box-shadow:0 0 0 1px rgba(255,255,255,.85)}
 .ms{position:relative;border-radius:50%;background:var(--primary-bg-high);display:grid;place-items:center;box-shadow:0 2px 6px rgba(0,0,0,.25)}
 .ms img{width:60%;height:auto;aspect-ratio:18/7.875;margin-bottom:6%}
 .ms .dot{position:absolute;top:-3px;right:-5px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--error-fg-high);color:#fff;font:700 11px/18px var(--os-font);text-shadow:none}
@@ -175,14 +177,23 @@ img{display:block}
 
 /* ---------- Morning Spark app window ---------- */
 #app{width:min(1200px,calc(100vw - 80px));height:min(860px,calc(100vh - 96px))}
-.app-head{flex-shrink:0;background:var(--primary-bg-high);display:flex;align-items:center;justify-content:space-between;padding:8px 16px;color:#fff;zoom:var(--ui)}
-.app-head .brand{display:flex;align-items:center;gap:8px;font-size:18px;line-height:26px;font-weight:700}
-.app-head .logo{width:32px;height:32px;display:flex;align-items:center;justify-content:center;padding-bottom:4px}
-.app-head .logo img{width:32px;height:14px}
-.app-head .ctl{display:flex;gap:12px}
-.app-head .ctl button,.app-head .back{width:28px;height:28px;display:grid;place-items:center;border-radius:4px}
-.app-head .ctl button:hover,.app-head .back:hover{background:rgba(255,255,255,.18)}
-.app-head .ctl img,.app-head .back img{width:24px;height:24px}
+.app-head{flex-shrink:0;height:40px;background:var(--primary-bg-high);display:flex;align-items:stretch;justify-content:space-between;padding-left:8px;color:#fff;user-select:none}
+.app-head .brand{display:flex;align-items:center;gap:6px;font-size:14px;line-height:20px;font-weight:600}
+.app-head .logo{width:24px;height:24px;display:flex;align-items:center;justify-content:center;padding-bottom:2px}
+.app-head .logo img{width:22px;height:10px}
+.app-head .back{width:32px;height:32px;display:grid;place-items:center;border-radius:4px}
+.app-head .back:hover{background:rgba(255,255,255,.18)}
+.app-head .back img{width:20px;height:20px}
+.app-head .ctl{display:flex;height:100%}
+.app-head .ctl button{width:46px;height:100%;display:grid;place-items:center;color:#fff}
+.app-head .ctl button:hover{background:rgba(255,255,255,.14)}
+.app-head .ctl button:active{background:rgba(255,255,255,.22)}
+.app-head .ctl button.x:hover{background:#c42b1c}
+.app-head .ctl button.x:active{background:#b22a1b}
+.app-head .ctl svg{width:10px;height:10px}
+.app-head .ctl .r{display:none}
+#app.max .app-head .ctl .m{display:none}
+#app.max .app-head .ctl .r{display:block}
 .app-body{flex:1;overflow-y:auto;position:relative}
 .app-body::-webkit-scrollbar{width:8px}.app-body::-webkit-scrollbar-thumb{background:var(--gray-bg-midgray);border-radius:8px}
 .screen{zoom:var(--ui);min-height:100%}
@@ -464,6 +475,7 @@ input[type=checkbox]:focus-visible,input[type=radio]:focus-visible{outline:2px s
   </svg>
 
   <div class="icons" id="icons"></div>
+  <div id="marquee"></div>
 
   <div class="hint" id="hint">
     <button id="hint-x" aria-label="ปิด">✕</button>
@@ -508,9 +520,13 @@ input[type=checkbox]:focus-visible,input[type=radio]:focus-visible{outline:2px s
 
 <div id="toast"></div>
 
-<script src="data.js?v=202610270930"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
+<script src="supabase-config.js?v=202611021800"></script>
+<script src="data.js?v=202611021800"></script>
 <script>
 const A = 'assets/';
+// Real articles live online when supabase-config.js is filled in (store.js); then "today" is the real date
+const ONLINE = !!(window.MS_SUPABASE?.url && window.MS_SUPABASE?.key && window.supabase);
 const TYPE = {product:{label:'ผลิตภัณฑ์', icon:'icon-tag-blue.svg', wicon:'w-icon-tag.svg'}, practice:{label:'ข้อปฏิบัติ', icon:'icon-newspaper-blue.svg', wicon:'w-icon-newspaper.svg'}};
 const state = {loggedIn:false, screen:'login', next:null, article:null, tab:'summary', img:0,
   q:'', type:'all', read:'all', status:'all', page:1};
@@ -549,7 +565,7 @@ function toast(msg, o={}){
 
 /* Date picker (DS) — Thai months, Buddhist years, date / month / year views */
 const TH_M = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
-const DP_TODAY = {d:9, m:8, y:2569};
+const DP_TODAY = ONLINE ? (d => ({d:d.getDate(), m:d.getMonth(), y:d.getFullYear()+543}))(new Date()) : {d:9, m:8, y:2569};
 const CHEV = (d) => `<svg width="${d==='down'?12:14}" height="${d==='down'?12:14}" viewBox="0 0 16 16"><path d="${{down:'M4 6l4 4 4-4',left:'M10 4L6 8l4 4',right:'M6 4l4 4-4 4'}[d]}" fill="none" stroke="#1a1e28" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 let dp = null;
 function closeDP(){ if (dp){ dp.el.remove(); dp = null; } }
@@ -905,7 +921,7 @@ function vDetail(){
       ${a.groups.map(g=>`<div class="group"><div class="gh">${esc(g.group)}</div>
         ${g.docs.map(d=>{ const ds = docSt(d), cx = isSt(ds) && ds.status==='ยกเลิก', up = isSt(ds) && ds.status==='อัปเดต';
           return `<div class="doc${cx?' dcx':''}"><div class="dh"><span class="fi"><img src="${A}file-graphic.svg" alt="">${cx?FILE_BADGE.ban:up?FILE_BADGE.star:''}</span>
-            <span class="lk"><button class="link" data-doc="${esc(d.name)}"><span>${esc(d.name)}</span></button>${stTag(ds, L)}</span>
+            <span class="lk"><button class="link" data-doc="${esc(d.name)}"${/^https?:\/\//i.test(d.url||'')?` data-url="${esc(d.url)}"`:''}><span>${esc(d.name)}</span></button>${stTag(ds, L)}</span>
             ${d.rows?`<button class="acc" aria-label="ย่อ/ขยาย"><img src="${A}icon-chevron-up.svg" alt=""></button>`:''}</div>
           ${d.rows?`<div class="rows">${d.rows.map(r=>`<div class="r${cx?'':rowCls(r,L)}"><div class="c"><div class="rf"><b>${esc(r.ref)}</b>${cx?'':stTag(r,L)}</div>${esc(r.detail)}</div><div class="s">${esc(r.note)}</div></div>`).join('')}</div>`:''}
         </div>`; }).join('')}</div>`).join('')}
@@ -947,9 +963,9 @@ function appEl(){
         <span class="logo"><img src="${A}logo-sun-white.svg" alt=""></span>Morning spark
       </div>
       <div class="ctl">
-        <button data-go="minimize" aria-label="ย่อ"><img src="${A}win-minimize.svg" alt=""></button>
-        <button id="max" aria-label="ขยาย"><img src="${A}win-maximize.svg" alt=""></button>
-        <button data-go="close" aria-label="ปิด"><img src="${A}win-close.svg" alt=""></button>
+        <button data-go="minimize" aria-label="ย่อ"><svg viewBox="0 0 10 10"><path d="M0 5.5h10" stroke="currentColor"/></svg></button>
+        <button id="max" aria-label="ขยาย"><svg class="m" viewBox="0 0 10 10"><rect x=".5" y=".5" width="9" height="9" rx="1" fill="none" stroke="currentColor"/></svg><svg class="r" viewBox="0 0 10 10"><rect x=".5" y="2.5" width="7" height="7" rx="1" fill="none" stroke="currentColor"/><path d="M2.5 2.5V1.5a1 1 0 0 1 1-1h5a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1h-1" fill="none" stroke="currentColor"/></svg></button>
+        <button class="x" data-go="close" aria-label="ปิด"><svg viewBox="0 0 10 10"><path d="M.5.5l9 9M9.5.5l-9 9" stroke="currentColor"/></svg></button>
       </div>
     </header><div class="app-body" id="body"></div>`;
   $('#windows').appendChild(el);
@@ -971,7 +987,7 @@ function openApp(target){
   target ? openArticle(target) : (state.screen==='login' ? go('feed') : render());
 }
 function openArticle(id){
-  const a = ARTICLES.find(x=>x.id===id); a.read = true;
+  const a = ARTICLES.find(x=>x.id===id); a.read = true; if (ONLINE) markRead(a);
   go('detail', {article:a, tab:'summary', img:0});
 }
 function hideApp(){ $('#app').classList.add('hidden'); renderWidget(); updateTaskbar(); }
@@ -980,8 +996,38 @@ function hideApp(){ $('#app').classList.add('hidden'); renderWidget(); updateTas
 // Focus/z-order: pressing on a window raises it; pressing the widget raises the widget
 document.addEventListener('pointerdown', e => {
   const w = e.target.closest('.win, #widget'); if (w) focusWin(w);
-  if (!e.target.closest('.d-icon')) document.querySelectorAll('.d-icon.sel').forEach(x=>x.classList.remove('sel'));
+  const add = (e.ctrlKey||e.metaKey) && isWallpaper(e.target);   // Ctrl/Cmd + drag keeps the current selection
+  if (!e.target.closest('.d-icon') && !add) document.querySelectorAll('.d-icon.sel').forEach(x=>x.classList.remove('sel'));
 }, true);
+// Drag on empty wallpaper draws a selection rectangle; icons it touches get .sel
+function isWallpaper(t){ return t.id==='desktop' || t.id==='icons' || t.id==='bloom' || !!t.closest('#bloom'); }
+(function(){
+  const desk = $('#desktop'), box = $('#marquee');
+  desk.addEventListener('pointerdown', e => {
+    if (e.button!==0 || !isWallpaper(e.target)) return;
+    e.preventDefault();
+    const x0 = e.clientX, y0 = e.clientY, maxY = $('#taskbar').getBoundingClientRect().top;
+    const base = (e.ctrlKey||e.metaKey) ? new Set(document.querySelectorAll('.d-icon.sel')) : new Set();
+    let drawing = false;
+    try { desk.setPointerCapture(e.pointerId); } catch {}
+    const move = ev => {
+      const x1 = Math.min(Math.max(ev.clientX,0), innerWidth), y1 = Math.min(Math.max(ev.clientY,0), maxY);
+      if (!drawing && Math.hypot(x1-x0, y1-y0) < 3) return;   // tiny wobble = a plain click
+      drawing = true;
+      const L = Math.min(x0,x1), T = Math.min(y0,y1), R = Math.max(x0,x1), B = Math.max(y0,y1);
+      Object.assign(box.style, {display:'block', left:L+'px', top:T+'px', width:(R-L)+'px', height:(B-T)+'px'});
+      document.querySelectorAll('.d-icon').forEach(i => {
+        const r = i.getBoundingClientRect();
+        i.classList.toggle('sel', base.has(i) || (r.left<R && r.right>L && r.top<B && r.bottom>T));
+      });
+    };
+    const up = () => {
+      desk.removeEventListener('pointermove', move); desk.removeEventListener('pointerup', up); desk.removeEventListener('pointercancel', up);
+      box.style.display = 'none';
+    };
+    desk.addEventListener('pointermove', move); desk.addEventListener('pointerup', up); desk.addEventListener('pointercancel', up);
+  });
+})();
 document.addEventListener('click', e => {
   const t = e.target.closest('button,[data-go]'); if (!t) return;
   if (t.classList.contains('d-icon')){
@@ -1013,6 +1059,7 @@ document.addEventListener('click', e => {
   if (t.dataset.page){ const p=t.dataset.page; state.page = p==='prev'?Math.max(1,state.page-1):p==='next'?Math.min(7,state.page+1):+p; render(); return toast('ตัวอย่างข้อมูลมีแค่หน้าแรกนะ'); }
   if (t.dataset.tab){ state.tab=t.dataset.tab; return render(); }
   if (t.classList.contains('acc')) return t.closest('.doc').classList.toggle('closed');
+  if (t.dataset.url) return window.open(t.dataset.url, '_blank', 'noopener');
   if (t.dataset.doc) return toast(`เปิดเอกสาร “${t.dataset.doc}” (PDF จาก Intranet)`);
   if (t.id==='dl-all') return toast('ดาวน์โหลดรูปภาพทั้งหมดลงเครื่องแล้ว');
   if (e.target.closest('[data-dl]')) return toast('ดาวน์โหลดรูปภาพแล้ว');
@@ -1024,6 +1071,7 @@ document.addEventListener('submit', e => {
     const id=$('#emp').value.trim(), pw=$('#pw').value;
     $('#f-id').classList.toggle('err', !id); $('#f-pw').classList.toggle('err', !pw);
     if (!id || !pw) return;
+    if (ONLINE) return readerLogin(id, pw);
     state.loggedIn = true;
     const n = state.next; state.next = null;
     n ? openArticle(n) : go('feed');
@@ -1081,7 +1129,8 @@ renderDesktop();
 makeDraggable(widget(), $('.w-head'));
 renderWidget(); updateTaskbar();
 </script>
-<script src="maker.js?v=202610270930"></script>
-<script src="maker-library.js?v=202610270930"></script>
+<script src="maker.js?v=202611031000"></script>
+<script src="maker-library.js?v=202611021800"></script>
+<script src="store.js?v=202611021800"></script>
 </body>
 </html>
