@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>คู่มือผู้เขียนประกาศ · Morning Spark</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* Tokens from the Morning Spark Figma file (same as index.html) */
+:root{
+  --primary-bg-high:#1e87cb; --primary-bg-mid:#359fe1; --primary-bg-low:#d4ecfb; --primary-bg-lowest:#eef7fd;
+  --primary-fg-highest:#156dab; --primary-fg-high:#1e87cb;
+  --secondary-bg-mid:#f89350; --secondary-bg-lowest:#fef7f0; --secondary-border-low:#fdebd8; --secondary-fg-highest:#bc6220;
+  --error-fg-high:#c84341; --error-bg-lowest:#fdf1f1; --ok:#1f9d55;
+  --gray-fg-high:#1a1e28; --gray-fg-mid:#62707e; --gray-fg-low:#8990a2;
+  --gray-border-light:#c9cdd8; --gray-border-divider:#e1e4ec; --gray-bg-light:#f7f8fb;
+  --shadow-4:0 1px 2px rgba(27,29,31,.08),0 8px 24px rgba(27,29,31,.12);
+  --font:"Krungthai Fast","Noto Sans Thai",system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--font);color:var(--gray-fg-high);background:var(--gray-bg-light);font-size:16px;line-height:1.6;display:flex;flex-direction:column}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+a{color:var(--primary-fg-high)}
+b{font-weight:700}
+
+/* Top bar */
+.top{background:var(--primary-bg-high);color:#fff;display:flex;align-items:center;gap:16px;padding:12px 24px;flex-shrink:0}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:18px}
+.brand img{height:22px}
+.brand small{font-weight:400;opacity:.85;font-size:15px}
+.top .grow{flex:1}
+.top a.open{color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,.6);border-radius:8px;padding:6px 14px;font-size:14px;font-weight:500}
+.top a.open:hover{background:rgba(255,255,255,.14)}
+.menu-btn{display:none;color:#fff;font-size:22px;line-height:1}
+.prog{height:6px;background:var(--primary-bg-low);flex-shrink:0}
+.prog i{display:block;height:100%;background:var(--secondary-bg-mid);transition:width .25s}
+
+.layout{flex:1;display:flex;min-height:0}
+/* Step list */
+.side{width:300px;flex-shrink:0;background:#fff;border-right:1px solid var(--gray-border-divider);overflow:auto;padding:16px 12px 24px}
+.side h4{font-size:13px;color:var(--gray-fg-low);font-weight:700;letter-spacing:.02em;margin:16px 10px 6px}
+.side h4:first-child{margin-top:0}
+.side button{display:flex;gap:10px;width:100%;text-align:left;padding:7px 10px;border-radius:8px;font-size:15px;line-height:1.4;color:var(--gray-fg-mid)}
+.side button:hover{background:var(--primary-bg-lowest)}
+.side button .n{flex-shrink:0;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;background:var(--gray-bg-light);border:1px solid var(--gray-border-light)}
+.side button.done .n{background:var(--primary-bg-low);border-color:var(--primary-bg-low);color:var(--primary-fg-highest)}
+.side button.on{background:var(--primary-bg-lowest);color:var(--primary-fg-highest);font-weight:700}
+.side button.on .n{background:var(--primary-bg-high);border-color:var(--primary-bg-high);color:#fff}
+
+/* Main */
+main{flex:1;display:flex;flex-direction:column;min-width:0}
+.stage{flex:1;overflow:auto;padding:24px 32px}
+.head{display:flex;align-items:baseline;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.chip{font-size:13px;font-weight:700;color:var(--secondary-fg-highest);background:var(--secondary-bg-lowest);border:1px solid var(--secondary-border-low);border-radius:99px;padding:2px 12px}
+.head h1{font-size:28px;line-height:1.3}
+.body{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:28px;align-items:start}
+.body.text{grid-template-columns:minmax(0,860px)}
+
+/* Screenshot with callouts */
+.shot{position:relative;border-radius:10px;overflow:hidden;box-shadow:var(--shadow-4);background:#fff;cursor:zoom-in}
+.shot img{display:block;width:100%;height:auto}
+.mk{position:absolute;border:3px solid var(--secondary-bg-mid);border-radius:8px;box-shadow:0 0 0 4px rgba(248,147,80,.25);pointer-events:none;transition:box-shadow .2s,border-color .2s}
+.mk span{position:absolute;left:-14px;top:-14px;width:28px;height:28px;border-radius:50%;background:var(--secondary-bg-mid);color:#fff;font-weight:700;font-size:15px;display:grid;place-items:center;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.mk.hot{border-color:var(--primary-bg-high);box-shadow:0 0 0 6px rgba(30,135,203,.35)}
+.mk.hot span{background:var(--primary-bg-high)}
+.zoomhint{font-size:13px;color:var(--gray-fg-low);margin-top:8px}
+
+/* Instructions */
+ol.steps{list-style:none;display:flex;flex-direction:column;gap:10px}
+ol.steps li{display:flex;gap:12px;background:#fff;border:1px solid var(--gray-border-divider);border-radius:10px;padding:12px 14px}
+ol.steps li .b{flex-shrink:0;width:28px;height:28px;border-radius:50%;background:var(--secondary-bg-mid);color:#fff;font-weight:700;font-size:15px;display:grid;place-items:center}
+ol.steps li .b.dot{background:var(--gray-border-light)}
+ol.steps li[data-n]:hover{border-color:var(--primary-bg-high)}
+.ui{display:inline-block;background:var(--primary-bg-lowest);color:var(--primary-fg-highest);border:1px solid var(--primary-bg-low);border-radius:6px;padding:0 6px;font-weight:500;white-space:nowrap}
+.tip{margin-top:14px;background:var(--secondary-bg-lowest);border:1px solid var(--secondary-border-low);border-radius:10px;padding:12px 14px}
+.tip b:first-child{color:var(--secondary-fg-highest);display:block;margin-bottom:2px}
+.warn{margin-top:14px;background:var(--error-bg-lowest);border:1px solid #f5cfcf;border-radius:10px;padding:12px 14px}
+.warn b:first-child{color:var(--error-fg-high);display:block;margin-bottom:2px}
+
+/* Text-only steps */
+.card{background:#fff;border:1px solid var(--gray-border-divider);border-radius:12px;padding:20px 24px;margin-bottom:16px}
+.card h3{font-size:18px;margin-bottom:8px}
+.card ul{padding-left:22px;display:flex;flex-direction:column;gap:6px}
+.card.no{border-color:#f5cfcf;background:var(--error-bg-lowest)}
+.card.no h3{color:var(--error-fg-high)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.ex{display:flex;flex-direction:column;gap:8px}
+.ex div{border-radius:8px;padding:10px 12px;font-size:15px}
+.ex .bad{background:var(--error-bg-lowest);border:1px solid #f5cfcf}
+.ex .good{background:#effaf3;border:1px solid #c6ebd4}
+.ex small{display:block;font-weight:700;font-size:12px}
+.ex .bad small{color:var(--error-fg-high)}
+.ex .good small{color:var(--ok)}
+.check label{display:flex;gap:12px;align-items:flex-start;padding:10px 12px;border-radius:8px;cursor:pointer}
+.check label:hover{background:var(--primary-bg-lowest)}
+.check input{width:20px;height:20px;margin-top:3px;accent-color:var(--primary-bg-high);flex-shrink:0}
+.check label.ok span{color:var(--gray-fg-low);text-decoration:line-through}
+.ready{margin-top:12px;font-weight:700;color:var(--ok);display:none}
+.ready.show{display:block}
+.hero{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:28px;align-items:center}
+.hero p{font-size:18px;margin-bottom:12px}
+
+/* Bottom nav */
+.nav{flex-shrink:0;background:#fff;border-top:1px solid var(--gray-border-divider);display:flex;align-items:center;gap:16px;padding:12px 32px}
+.nav .grow{flex:1;text-align:center;color:var(--gray-fg-low);font-size:14px}
+.btn{height:48px;min-width:150px;border-radius:10px;font-size:17px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:0 22px}
+.btn.pri{background:var(--primary-bg-high);color:#fff}
+.btn.pri:hover{background:var(--primary-fg-highest)}
+.btn.out{border:1px solid var(--primary-bg-high);color:var(--primary-fg-high);background:#fff}
+.btn.out:hover{background:var(--primary-bg-lowest)}
+.btn:disabled{opacity:.35;cursor:default}
+kbd{font:12px/1 var(--font);border:1px solid var(--gray-border-light);border-bottom-width:2px;border-radius:4px;padding:2px 5px;background:#fff}
+
+/* Zoom */
+.zoom{position:fixed;inset:0;background:rgba(10,20,40,.88);display:none;place-items:center;z-index:50;padding:24px;cursor:zoom-out}
+.zoom.on{display:grid}
+.zoom .shot{max-width:min(96vw,calc(92vh*1.6));width:100%;cursor:zoom-out;box-shadow:none}
+
+@media (max-width:1100px){
+  .body,.hero{grid-template-columns:1fr}
+  .side{position:fixed;top:0;bottom:0;left:0;z-index:40;transform:translateX(-100%);transition:transform .2s;box-shadow:var(--shadow-4)}
+  .side.open{transform:none}
+  .menu-btn{display:block}
+  .two{grid-template-columns:1fr}
+  .stage{padding:16px}
+  .nav{padding:10px 16px}
+  .btn{min-width:110px}
+  .top a.open{display:none}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <button class="menu-btn" id="menu" aria-label="รายการขั้นตอน">☰</button>
+  <div class="brand"><img src="assets/logo-sun-white.svg" alt="">Morning Spark <small>· คู่มือสำหรับผู้เขียนประกาศ (Maker)</small></div>
+  <div class="grow"></div>
+  <a class="open" href="index.html" target="_blank" rel="noopener">เปิดต้นแบบ ↗</a>
+</header>
+<div class="prog"><i id="prog"></i></div>
+<div class="layout">
+  <nav class="side" id="side" aria-label="ขั้นตอน"></nav>
+  <main>
+    <div class="stage" id="stage"></div>
+    <div class="nav">
+      <button class="btn out" id="prev">← ย้อนกลับ</button>
+      <div class="grow" id="count"></div>
+      <button class="btn pri" id="next">ถัดไป →</button>
+    </div>
+  </main>
+</div>
+<div class="zoom" id="zoom" aria-hidden="true"></div>
+
+<script>
+// Each step: chapter, title, screenshot + callouts ([n, x%, y%, w%, h%] of the screenshot), numbered instructions, tip.
+// Screenshots come from the prototype in sample mode (fixed date 09/09/2569); the live site shows today's date.
+const G = 'assets/guide/';
+const ui = s => `<span class="ui">${s}</span>`;
+const STEPS = [
+  {ch:'เริ่มต้น', t:'ยินดีต้อนรับ', hero:true, img:'12b-receiver.jpg', html:`
+    <p>คู่มือนี้พาพี่เอและพี่แก้ว <b>เขียนประกาศจริงลงในต้นแบบ Morning Spark</b> เพื่อใช้ทดสอบกับพนักงานสาขาจริง</p>
+    <p>ใช้เวลาประมาณ 5 นาที แต่ละหน้าจะมีภาพหน้าจอจริงและหมายเลขบอกว่าต้องคลิกตรงไหน</p>
+    <div class="tip"><b>วิธีใช้คู่มือ</b>กด ${ui('ถัดไป →')} หรือปุ่มลูกศร <kbd>→</kbd> <kbd>←</kbd> บนคีย์บอร์ด · คลิกภาพเพื่อขยาย · เลือกหัวข้อจากรายการด้านซ้ายได้เลย</div>
+    <div class="tip"><b>ภาพในคู่มือเป็นข้อมูลตัวอย่าง</b>วันที่ในภาพคือ 09/09/2569 บนเว็บจริงจะเป็นวันที่ของวันนี้ และประกาศที่เขียนจะบันทึกไว้ออนไลน์ให้ผู้ทดสอบเห็นได้จากทุกเครื่อง</div>`},
+  {ch:'เริ่มต้น', t:'เปิด Morning Spark Admin', img:'01-desktop.jpg',
+    marks:[[1,0.6,68.9,6.1,10.7],[2,0.6,80.2,6.1,10.7],[3,76.9,17.8,21.1,10.3]],
+    items:[[1,`คลิกไอคอน ${ui('Morning Spark Admin')} บนเดสก์ท็อป (คลิกครั้งเดียวก็เปิดได้) จะเข้าหน้าเข้าสู่ระบบทันที`],
+           [2,`หรือเปิด ${ui('Web Browser')} แล้วพิมพ์ชื่อเว็บเอง (ดูขั้นตอนถัดไป)`],
+           [3,`การ์ด ${ui('เริ่มทดสอบ Morning Spark')} มุมขวาบนบอกวิธีเข้าทั้งฝั่งผู้รับและผู้เขียน ชี้เมาส์ที่ ${ui('ผู้เขียนประกาศ (Maker)')} ไอคอนที่ต้องคลิกจะเรืองแสง`],
+           [0,`เปิดต้นแบบได้ที่ลิงก์เดียวกับที่วินส่งให้ (ปุ่ม ${ui('เปิดต้นแบบ ↗')} มุมขวาบนของคู่มือนี้)`]],
+    tip:`<b>เคล็ดลับ</b>ปิดการ์ดได้ด้วย ✕ แล้วเปิดใหม่ที่ปุ่ม ${ui('?')} มุมขวาบน · หน้าต่างแอดมินลากย้าย ย่อ ขยายได้เหมือน Windows จริง กดปุ่มขยาย (□) เพื่อให้มีพื้นที่เขียนเต็มจอ`},
+  {ch:'เริ่มต้น', t:'หรือเข้าทาง Web Browser', img:'01b-browser.jpg',
+    marks:[[1,6.6,3.1,86.8,7.3],[2,6.7,11.4,86.7,4]],
+    items:[[0,`Web Browser จะเปิดที่หน้าแรกแบบ Google`],
+           [1,`พิมพ์ <b>morning spark</b> ในช่องที่อยู่ด้านบน`],
+           [2,`คลิกรายการ ${ui('Morning Spark Admin')} ที่ขึ้นมาเป็นอันดับแรก (หรือกด <kbd>Enter</kbd>)`]],
+    tip:`<b>เคล็ดลับ</b>วิธีนี้เหมือนตอนใช้งานจริงที่เปิดเว็บจากเบราว์เซอร์ ผลลัพธ์เหมือนกับคลิกไอคอน Morning Spark Admin`},
+  {ch:'เริ่มต้น', t:'เข้าสู่ระบบ', img:'02-login.jpg',
+    marks:[[1,37.8,32.1,24.4,8.2],[2,37.8,42.1,24.4,8.2],[3,37.8,52.1,24.4,5.3],[4,37.8,61,24.4,5.3],[5,42.2,70.1,15.5,2.2]],
+    items:[[1,`กรอกอีเมล Krungthai ของตัวเอง หรือพิมพ์แค่ส่วนหน้า @ ก็ได้`],
+           [2,`กรอกรหัสผ่าน <b>(ขอจากวิน)</b>`],
+           [3,`กด ${ui('เข้าสู่ระบบ')}`],
+           [4,`กล่อง ${ui('ทดสอบ: …')} เตือนวิธีเข้าระบบไว้ให้ ถ้าลืม`],
+           [5,`ลิงก์ ${ui('ดูคู่มือการใช้งานสำหรับผู้เขียนประกาศ ↗')} เปิดคู่มือนี้ได้ทุกเมื่อ (มีในเมนูซ้ายหลังเข้าระบบด้วย)`]],
+    warn:`<b>อย่าแชร์รหัสผ่าน</b>คู่มือนี้และเว็บต้นแบบเปิดดูได้ด้วยลิงก์ จึงไม่ใส่รหัสผ่านไว้ที่ไหนเลย ถ้าลืมให้ทักวินได้เลย`},
+  {ch:'เริ่มต้น', t:'หน้ารายการประกาศ', img:'03-list.jpg',
+    marks:[[1,88.6,11.7,9.4,4.4],[2,5.9,20.3,13.9,5.1],[3,91.1,39.1,2.1,3.3]],
+    items:[[1,`กด ${ui('+ สร้างประกาศ')} เพื่อเริ่มเขียนประกาศใหม่`],
+           [2,`แท็บ ${ui('ประกาศ')} ${ui('เอกสาร')} ${ui('ข้อมูลรูปภาพ')} รวมทุกประกาศ เอกสาร และรูปที่เคยใส่ไว้`],
+           [3,`ไอคอนดินสอ = แก้ไข · ประกาศที่ยังเป็น ${ui('ฉบับร่าง')} กลับมาเขียนต่อได้`]],
+    tip:`<b>เคล็ดลับ</b>ถ้าเพิ่งเริ่มใช้ อาจเห็นประกาศของอีกคนในรายการด้วย เพราะทุกคนใช้ข้อมูลชุดเดียวกัน แก้ของใครควรบอกกันก่อนนะ`},
+
+  {ch:'สร้างประกาศ', t:'วันที่เผยแพร่และกลุ่มผู้รับ', img:'04-groups.jpg',
+    marks:[[1,8.0,47.3,87.9,4.7],[2,8.0,52.4,87.9,26.7]],
+    items:[[0,`<b>วันที่เผยแพร่</b> เลือก ${ui('เผยแพร่วันถัดไป')} (06:00 น. ของพรุ่งนี้) หรือ ${ui('กำหนดวันที่เผยแพร่')} แล้วเลือกวัน`],
+           [1,`คลิกช่อง <b>กลุ่มผู้รับ</b> เพื่อเปิดรายการ (กลุ่มทำกับงานกฎเกณฑ์ ถูกใส่ไว้ให้เสมอ)`],
+           [2,`ติ๊กกลุ่มสาขาที่ต้องได้รับประกาศนี้ กด ✕ บนชิปเพื่อเอาออก`]],
+    tip:`<b>เคล็ดลับ</b>เลือกกลุ่มให้ตรงกับที่จะส่งจริง ตอนทดสอบเราจะดูว่าพนักงานแต่ละกลุ่มเห็นประกาศที่เกี่ยวกับตัวเองหรือไม่`},
+  {ch:'สร้างประกาศ', t:'ประเภท วันที่มีผล หัวข้อ และผู้ติดต่อ', img:'05-form-top.jpg',
+    marks:[[3,7.0,55.1,89.9,7.3],[4,7.0,66.9,89.9,4.4],[5,7.0,82.3,89.9,4.4]],
+    items:[[3,`<b>ประเภทประกาศ</b> ${ui('ข้อปฏิบัติ')} หรือ ${ui('ผลิตภัณฑ์')} · <b>เริ่มใช้</b> วันที่มีผล · <b>วันที่สิ้นสุด</b> ใส่เมื่อมีวันหมดอายุ`],
+           [4,`<b>หัวข้อประกาศ</b> ไม่เกิน 250 ตัวอักษร ตัวนับอยู่ทางขวาของช่อง`],
+           [5,`<b>ทีม/ หน่วยงาน</b> และ <b>ข้อมูลการติดต่อ</b> (เบอร์โทรหรืออีเมล) · กด ${ui('+ เพิ่มข้อมูลติดต่อ')} ได้หลายรายการ`]],
+    tip:`<b>เคล็ดลับ</b>ช่องที่มี <span style="color:var(--error-fg-high)">*</span> ต้องกรอก ถ้าขาดอะไร ระบบจะขึ้นตัวแดงใต้ช่องตอนกดเผยแพร่`},
+  {ch:'สร้างประกาศ', t:'สรุปประกาศ เซ็กชั่น และเอกสาร', img:'06-summary-docs.jpg',
+    marks:[[1,7.0,27.1,89.9,12.2],[2,7.1,41.7,89.7,5.8],[3,31.7,53.2,32.3,4.4],[4,61.5,53.7,2.2,3.6],[5,64.7,53.2,24.9,4.4]],
+    items:[[1,`<b>สรุปประกาศ</b> ไม่เกิน 500 ตัวอักษร ผู้รับเห็นเป็นอย่างแรก เขียนให้รู้เลยว่าเปลี่ยนอะไร ต้องทำอะไร`],
+           [2,`<b>หัวข้อเซ็กชั่น</b> จัดกลุ่มเอกสาร เช่น ตรวจสอบข้อมูล, ยืนยันตัวตน`],
+           [3,`เลือก <b>สถานะเอกสาร</b> <b>ประเภทเอกสาร</b> แล้ววางลิงก์จาก Intranet ในช่อง ${ui('Intranet URL')}`],
+           [4,`กดแว่นขยาย 🔍 เพื่อดึงชื่อเอกสารจากชื่อไฟล์ในลิงก์`],
+           [5,`หรือพิมพ์ <b>ชื่อเอกสาร</b> เองได้เลย`]],
+    tip:`<b>เคล็ดลับ</b>ใช้ลิงก์ Intranet จริงของเอกสาร ผู้ทดสอบจะลองคลิกเปิดเอกสารด้วย`},
+  {ch:'สร้างประกาศ', t:'ถ้า 🔍 หาชื่อเอกสารไม่เจอ', img:'06b-name-modal.jpg',
+    marks:[[1,37.4,49.7,25.3,4.4]],
+    items:[[0,`ถ้าลิงก์ไม่ได้ลงท้ายด้วยชื่อไฟล์ (เช่น .pdf) จะขึ้นกล่อง ${ui('ไม่พบชื่อเอกสารในระบบนี้')}`],
+           [1,`พิมพ์ชื่อเอกสารแล้วกด ${ui('ยืนยัน')}`]],
+    tip:`<b>เคล็ดลับ</b>ตั้งชื่อเอกสารให้ตรงกับที่สาขาเรียกกันจริง เช่น ระเบียบ… คู่มือ… นว.…`},
+  {ch:'สร้างประกาศ', t:'รายละเอียดและการจัดลำดับ', img:'07-rows.jpg',
+    marks:[[1,24.7,45.8,12.5,4],[2,8.8,59.4,9.2,3.6],[3,8.8,66.3,8.8,4],[4,7.0,74.4,10.6,4.4],[5,8.8,39.4,1.4,4.4]],
+    items:[[1,`แต่ละแถวรายละเอียดมี: สถานะ · <b>อ้างอิง</b> (เช่น หน้า 12 | หมวด 1 | ข้อ 1.3) · <b>รายละเอียด / สาระสำคัญ</b> · <b>สิ่งที่เปลี่ยนแปลง</b> (ถ้ามี)`],
+           [2,`${ui('+ เพิ่มรายละเอียด')} เพิ่มแถวในเอกสารเดียวกัน`],
+           [3,`${ui('เพิ่มเอกสาร')} เพิ่มเอกสารอีกฉบับในเซ็กชั่นนี้`],
+           [4,`${ui('เพิ่มหัวข้อเซ็กชั่น')} เพิ่มเซ็กชั่นใหม่`],
+           [5,`<b>ลากที่จุด ⠿</b> เพื่อสลับลำดับเซ็กชั่น เอกสาร หรือแถวรายละเอียด`]],
+    tip:`<b>เคล็ดลับ</b>หนึ่งแถว = หนึ่งประเด็น เขียนสั้น ๆ แบบที่ใช้ในประกาศจริง ไม่ต้องคัดลอกทั้งย่อหน้าจากระเบียบ`},
+  {ch:'สร้างประกาศ', t:'อัปโหลดรูป Infographic', img:'08a-images-empty.jpg',
+    marks:[[1,7.0,26.4,89.9,25.1]],
+    items:[[0,`เปลี่ยนไปแท็บ ${ui('ข้อมูลรูปภาพ')}`],
+           [1,`ลากไฟล์มาวาง หรือกด ${ui('อัปโหลดไฟล์')} · jpg หรือ png ไม่เกิน 10 MB สูงสุด 30 ไฟล์ ชื่อไฟล์ไม่เกิน 80 ตัวอักษร`]],
+    tip:`<b>เคล็ดลับ</b>ปุ่ม ${ui('หรือใช้รูปตัวอย่าง')} มีไว้สำหรับลองเล่นเท่านั้น ตอนทดสอบจริงให้ใช้ Infographic จริง เช่น CLMG POST หรือ NRR พารู้`},
+  {ch:'สร้างประกาศ', t:'สถานะและแหล่งที่มาของรูป', img:'08-images.jpg',
+    marks:[[1,12.6,57.8,9.7,3.8],[2,23.3,57.9,11.7,3.6]],
+    items:[[1,`<b>สถานะรูปภาพ</b> ${ui('คงเดิม (Default)')} ${ui('อัปเดต')} หรือ ${ui('ยกเลิก')}`],
+           [2,`<b>แหล่งที่มา</b> ระบบเดาให้จากชื่อไฟล์ ถ้าไม่ตรงเลือกเองได้`],
+           [0,`ไอคอนถังขยะทางขวาใช้ลบรูป`]]},
+
+  {ch:'ส่งประกาศ', t:'ดูตัวอย่าง บันทึกร่าง เผยแพร่', img:'09-footer.jpg',
+    marks:[[1,69.0,88.8,8.2,4.4],[2,77.9,88.8,8.1,4.4],[3,86.7,88.8,10.7,4.4]],
+    items:[[1,`${ui('ดูตัวอย่าง')} ดูหน้าตาที่ผู้รับจะเห็น ก่อนส่ง`],
+           [2,`${ui('บันทึกร่าง')} เก็บไว้เขียนต่อทีหลัง (ระบบบันทึกอัตโนมัติด้วย ดูเวลาที่มุมขวาบน)`],
+           [3,`${ui('เผยแพร่ประกาศ')} กดได้เมื่อกรอกช่องจำเป็นครบ`]]},
+  {ch:'ส่งประกาศ', t:'หน้าตัวอย่างมุมมองผู้รับ', img:'10-preview.jpg',
+    marks:[[1,0.1,0.1,99.9,5.3],[2,91.9,1,6.9,3.6]],
+    items:[[1,`นี่คือสิ่งที่พนักงานสาขาจะเห็น ลองอ่านแบบคนหน้างาน: สรุปชัดไหม รู้ไหมว่าต้องทำอะไร`],
+           [2,`กด ${ui('ปิดตัวอย่าง')} เพื่อกลับไปแก้`]]},
+  {ch:'ส่งประกาศ', t:'เผยแพร่ แล้วจำลองการส่งตอน 06:00 น.', img:'11-published.jpg',
+    marks:[[1,28.5,32.9,43.1,28.9],[2,47.8,54.2,14.9,5.3]],
+    items:[[1,`หลังกดเผยแพร่ จะขึ้น ${ui('ตั้งเวลาเผยแพร่แล้ว')} พร้อมวันที่ส่ง`],
+           [2,`กด ${ui('จำลองการส่งตอน 06:00 น.')} เพื่อให้ประกาศถึงผู้รับทันที ไม่ต้องรอถึงเช้า`]],
+    warn:`<b>อย่าข้ามขั้นนี้</b>ถ้ากด ${ui('กลับหน้ารายการ')} โดยยังไม่จำลองการส่ง ผู้ทดสอบจะยังไม่เห็นประกาศ (สถานะ ${ui('กำหนดเผยแพร่')}) กลับมากดส่งจากรายการภายหลังได้`},
+  {ch:'ส่งประกาศ', t:'เช็กฝั่งผู้รับ: Widget', img:'12-widget.jpg',
+    marks:[[1,75,45.6,23.6,46.9],[2,75.9,57.9,21.7,9.8]],
+    items:[[0,`ย่อหน้าต่างแอดมินลง (ปุ่ม –) เพื่อดูเดสก์ท็อป`],
+           [1,`Widget Morning Spark มุมขวาล่างจะนับประกาศใหม่`],
+           [2,`คลิกการ์ดประกาศเพื่อเปิดอ่าน`]]},
+  {ch:'ส่งประกาศ', t:'เช็กฝั่งผู้รับ: เข้าสู่ระบบผู้รับ', img:'12a-receiver-login.jpg',
+    marks:[[1,34.9,36.6,30.3,8.7],[2,34.9,47,30.3,8.7],[3,37.8,66.8,24.4,3.3]],
+    items:[[1,`ครั้งแรกที่เปิดฝั่งผู้รับ จะขึ้นหน้าเข้าสู่ระบบ ใส่รหัสพนักงานทดสอบ <b>branch01</b>`],
+           [2,`รหัสผ่านขอจากวินเช่นกัน`],
+           [3,`ข้อความ ${ui('ทดสอบ: …')} ใต้ปุ่มบอกบัญชีที่ใช้ได้`]],
+    tip:`<b>เคล็ดลับ</b>บัญชีผู้รับนี้เป็นบัญชีทดสอบชั่วคราว ผู้ทดสอบที่สาขาจะใช้แบบเดียวกัน`},
+  {ch:'ส่งประกาศ', t:'เช็กฝั่งผู้รับ: หน้าอ่านประกาศ', img:'12b-receiver.jpg', marks:[],
+    items:[[0,`ตรวจว่า หัวข้อ สรุป เอกสาร แถวรายละเอียด และผู้ติดต่อ แสดงครบถูกต้อง`],
+           [0,`ลองคลิกชื่อเอกสาร และแท็บ ${ui('ข้อมูลรูปภาพ')} ว่าเปิดได้`]],
+    tip:`<b>เคล็ดลับ</b>ลองเปิดลิงก์ต้นแบบจากอีกเครื่องหนึ่งด้วย ประกาศที่เผยแพร่แล้วจะเห็นได้จากทุกเครื่อง`},
+
+  {ch:'แก้ไขและเรียกคืน', t:'แก้ไขหรือเรียกคืนประกาศที่เผยแพร่แล้ว', img:'13-list-actions.jpg',
+    marks:[[1,91.1,39.1,2.1,3.3],[2,93.6,39.1,2.1,3.3]],
+    items:[[1,`ไอคอนดินสอ = <b>แก้ไข</b> ประกาศที่เผยแพร่แล้ว`],
+           [2,`ไอคอนวงกลม = <b>เรียกคืนประกาศ</b> (ยกเลิกทั้งประกาศ)`],
+           [0,`ประกาศที่มีป้าย ${ui('อัปเดต')} หรือ ${ui('ยกเลิกใช้')} คือแบบที่ผู้รับจะเห็นป้ายเดียวกัน`]]},
+  {ch:'แก้ไขและเรียกคืน', t:'ใส่สถานะ อัปเดต / ยกเลิก ทีละแถว', img:'14-edit-status.jpg',
+    marks:[[1,13.5,45.8,10.4,4],[2,10.9,39.6,8.9,4.2]],
+    items:[[1,`ที่แถวรายละเอียดที่เปลี่ยน เลือกสถานะ ${ui('อัปเดต')} หรือ ${ui('ยกเลิก')} ระบบใส่วันที่ของวันนี้ให้`],
+           [2,`ถ้าเปลี่ยนทั้งฉบับ ใส่สถานะที่ <b>สถานะเอกสาร</b> แทน`],
+           [0,`กรอก <b>สิ่งที่เปลี่ยนแปลง</b> ให้ผู้รับรู้ว่าต่างจากเดิมอย่างไร แล้วกด ${ui('บันทึกการแก้ไข')}`]],
+    tip:`<b>เคล็ดลับ</b>สถานะเก่าจะยังเห็นเป็นข้อความเล็ก ${ui('ล่าสุด: อัปเดต วว/ดด/ปปปป')} ใต้ช่อง เหมือนประวัติการเปลี่ยน`},
+  {ch:'แก้ไขและเรียกคืน', t:'แจ้งเตือนผู้รับ หรือแก้เงียบ ๆ', img:'15-notify.jpg',
+    marks:[[1,29.9,39.8,40.3,7.3],[2,29.9,48.7,40.3,7.3]],
+    items:[[1,`${ui('แจ้งเตือนผู้รับ')} ประกาศกลับมาเป็น “ยังไม่อ่าน” พร้อมป้าย อัปเดต ใช้เมื่อเนื้อหาเปลี่ยนจริง`],
+           [2,`${ui('ไม่แจ้งเตือน')} สำหรับแก้เล็กน้อย เช่น คำผิด ผู้รับเห็นเนื้อหาใหม่โดยไม่มีแจ้งเตือน`]]},
+  {ch:'แก้ไขและเรียกคืน', t:'เรียกคืนประกาศ', img:'16-recall.jpg',
+    marks:[[1,35.1,36.8,29.7,21.1]],
+    items:[[1,`กด ${ui('เรียกคืนประกาศ')} เพื่อยืนยัน ผู้รับทุกกลุ่มจะเห็นสถานะ <b>ยกเลิกใช้</b> พร้อมวันที่ทันที`]],
+    warn:`<b>ย้อนกลับไม่ได้</b>ถ้าแค่จะแก้เนื้อหา ใช้ “แก้ไข” แทนการเรียกคืน`},
+
+  {ch:'เขียนให้สมจริง', t:'ใช้เรื่องจริง ให้เหมือนวันทำงานปกติ', html:`
+    <div class="card"><h3>ประกาศที่ดีสำหรับการทดสอบ</h3><ul>
+      <li>ใช้ <b>ประกาศจริงที่ส่งไปไม่นานนี้</b> หรือเรื่องที่กำลังจะส่ง ผู้ทดสอบจะอ่านแบบเดียวกับงานจริง</li>
+      <li><b>ความยาวและน้ำเสียงเท่าของจริง</b> ไม่ย่อจนสั้นเกิน ไม่ยาวกว่าที่ส่งจริง</li>
+      <li>ใส่ <b>ลิงก์ Intranet จริง</b> และ <b>Infographic จริง</b> (CLMG POST, เรื่องเด่นเรื่องเด็ด, สรุปสั้นทันใจ, NRR พารู้)</li>
+      <li>เลือกกลุ่มผู้รับและวันที่มีผลให้ตรงกับเรื่องจริง</li></ul></div>
+    <div class="two"><div class="card"><h3>สรุปประกาศ</h3><div class="ex">
+      <div class="bad"><small>ไม่ชัด</small>มีการปรับปรุงระเบียบเกี่ยวกับการเปิดบัญชี โปรดศึกษารายละเอียด</div>
+      <div class="good"><small>ชัด</small>ตั้งแต่ 01/10 ต้องตรวจบัตรประชาชนด้วยเครื่องอ่านบัตรทุกครั้งก่อนเปิดบัญชี ถ้าเครื่องเสียให้…</div></div></div>
+    <div class="card"><h3>แถวรายละเอียด</h3><div class="ex">
+      <div class="bad"><small>ยาวเกิน</small>คัดลอกทั้งข้อ 2.1 จากระเบียบมาวางทั้งย่อหน้า</div>
+      <div class="good"><small>พอดี</small>อ้างอิง: หน้า 3 | ข้อ 2.1 · สาระสำคัญ: ตรวจบัตรด้วยเครื่องอ่านบัตร · เปลี่ยนแปลง: เดิมตรวจด้วยสายตา</div></div></div></div>`},
+  {ch:'เขียนให้สมจริง', t:'ผสมหลายแบบ ให้ผู้ทดสอบเจอทุกสถานการณ์', html:`
+    <div class="card"><h3>ชุดประกาศที่แนะนำ (ประมาณ 6–10 เรื่อง)</h3><ul>
+      <li>มีทั้ง ${ui('ข้อปฏิบัติ')} และ ${ui('ผลิตภัณฑ์')}</li>
+      <li>บางเรื่องมีหลายเซ็กชั่น หลายเอกสาร บางเรื่องสั้น ๆ มีเอกสารเดียว</li>
+      <li>บางเรื่องมี Infographic หลายรูป บางเรื่องไม่มีรูป</li>
+      <li><b>2–3 เรื่องที่แก้ไขหลังเผยแพร่</b> ใส่ ${ui('อัปเดต')} หรือ ${ui('ยกเลิก')} ในบางแถว เพื่อให้ผู้ทดสอบเห็นป้ายสถานะ</li>
+      <li><b>1 เรื่องที่เรียกคืน</b> เพื่อดูว่าผู้รับเข้าใจสถานะ ยกเลิกใช้ ไหม</li>
+      <li>มีเรื่องที่ใกล้หมดอายุ (ใส่วันที่สิ้นสุดอีก 1–3 วัน) เพื่อดูป้ายเตือน</li></ul></div>
+    <div class="tip"><b>เคล็ดลับ</b>แบ่งกันเขียนได้เลย เช่น พี่เอเขียนข้อปฏิบัติ พี่แก้วเขียนผลิตภัณฑ์ แล้วสลับกันดูตัวอย่างของอีกคน</div>`},
+  {ch:'เขียนให้สมจริง', t:'สิ่งที่ห้ามใส่', html:`
+    <div class="card no"><h3>เว็บต้นแบบเปิดได้ด้วยลิงก์ อย่าใส่สิ่งเหล่านี้</h3><ul>
+      <li><b>ข้อมูลลูกค้า</b> ทุกชนิด: ชื่อ เลขบัญชี เลขบัตรประชาชน เบอร์โทร ภาพเอกสารลูกค้า</li>
+      <li><b>ข้อมูลส่วนตัวของพนักงาน</b> เช่น ชื่อ-นามสกุล เบอร์มือถือส่วนตัว (ใช้ชื่อทีมและเบอร์กลางของหน่วยงานแทน)</li>
+      <li>เรื่องที่เป็น <b>ความลับ</b> หรือจำกัดเฉพาะบางคน เกินกว่าประกาศปกติที่ส่งถึงพนักงานทุกคน</li>
+      <li>รหัสผ่าน หรือข้อมูลเข้าระบบใด ๆ</li></ul></div>
+    <div class="tip"><b>ถ้าไม่แน่ใจ</b>เว้นเรื่องนั้นไว้ก่อน หรือเปลี่ยนตัวเลข/ชื่อเป็นตัวอย่าง แล้วถามวินได้เลย</div>`},
+  {ch:'เขียนให้สมจริง', t:'เช็กลิสต์ก่อนบอกวินว่า “พร้อมทดสอบ”', check:[
+      'เขียนประกาศจริงอย่างน้อย 6 เรื่อง มีทั้งข้อปฏิบัติและผลิตภัณฑ์',
+      'ทุกเรื่องกด จำลองการส่งตอน 06:00 น. แล้ว (ไม่มีค้างที่ กำหนดเผยแพร่)',
+      'มีเรื่องที่มีสถานะ อัปเดต / ยกเลิก และเรื่องที่เรียกคืนอย่างน้อยอย่างละ 1',
+      'ลิงก์ Intranet เปิดได้ และ Infographic แสดงครบ',
+      'กลุ่มผู้รับ วันที่เริ่มใช้ และผู้ติดต่อถูกต้อง',
+      'เปิดดูจากฝั่งผู้รับแล้ว อ่านเข้าใจ ไม่มีคำผิด',
+      'ไม่มีข้อมูลลูกค้า ข้อมูลส่วนตัว หรือเรื่องลับ'],
+    html:`<div class="tip"><b>ติดตรงไหน ทักวินได้เลย</b>วิน (Kawin) ทาง Teams หรืออีเมล · ส่งภาพหน้าจอมาด้วยจะช่วยให้แก้ได้เร็วขึ้น</div>`},
+];
+
+const $ = s => document.querySelector(s);
+const KEY = 'ms-guide-check';
+let cur = 0, checks = {};
+try { checks = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch {}
+
+function renderSide(){
+  let ch = '', h = '';
+  STEPS.forEach((s,i) => {
+    if (s.ch !== ch){ ch = s.ch; h += `<h4>${ch}</h4>`; }
+    h += `<button data-go="${i}" class="${i===cur?'on':i<cur?'done':''}"${i===cur?' aria-current="step"':''}><span class="n">${i+1}</span><span>${s.t}</span></button>`;
+  });
+  $('#side').innerHTML = h;
+  $('#side .on')?.scrollIntoView({block:'nearest'});
+}
+const shotHtml = s => `<div class="shot" data-zoom><img src="${G}${s.img}" alt="ภาพหน้าจอ: ${s.t}">${(s.marks||[]).map(([n,x,y,w,h]) =>
+  `<div class="mk" data-mk="${n}" style="left:${x}%;top:${y}%;width:${w}%;height:${h}%"><span>${n}</span></div>`).join('')}</div>`;
+function renderStage(){
+  const s = STEPS[cur];
+  let body;
+  if (s.check) body = `<div class="body text"><div><div class="card check">${s.check.map((c,i) =>
+      `<label class="${checks[i]?'ok':''}"><input type="checkbox" data-ck="${i}" ${checks[i]?'checked':''}><span>${c}</span></label>`).join('')}
+      <div class="ready${s.check.every((_,i)=>checks[i])?' show':''}" id="ready">✓ ครบแล้ว ส่งข้อความหาวินได้เลยว่า “พร้อมทดสอบ”</div></div>${s.html}</div></div>`;
+  else if (s.hero) body = `<div class="hero"><div>${s.html}</div><div>${shotHtml(s)}<div class="zoomhint">ตัวอย่างประกาศที่ผู้รับจะเห็น</div></div></div>`;
+  else if (!s.img) body = `<div class="body text"><div>${s.html}</div></div>`;
+  else body = `<div class="body"><div>${shotHtml(s)}<div class="zoomhint">คลิกภาพเพื่อขยาย</div></div><div>
+    <ol class="steps">${s.items.map(([n,t]) => `<li${n?` data-n="${n}"`:''}><span class="b${n?'':' dot'}">${n||'•'}</span><span>${t}</span></li>`).join('')}</ol>
+    ${s.tip?`<div class="tip">${s.tip}</div>`:''}${s.warn?`<div class="warn">${s.warn}</div>`:''}</div></div>`;
+  $('#stage').innerHTML = `<div class="head"><span class="chip">${s.ch}</span><h1>${s.t}</h1></div>${body}`;
+  $('#stage').scrollTop = 0;
+  // Preload the next screenshot so clicking ถัดไป feels instant
+  const nx = STEPS[cur+1]; if (nx?.img) new Image().src = G + nx.img;
+}
+function go(i){
+  cur = Math.max(0, Math.min(STEPS.length-1, i));
+  history.replaceState(null, '', '#' + (cur+1));
+  renderSide(); renderStage();
+  $('#prog').style.width = ((cur+1)/STEPS.length*100) + '%';
+  $('#count').textContent = `ขั้นตอน ${cur+1} จาก ${STEPS.length}`;
+  $('#prev').disabled = cur===0;
+  $('#next').textContent = cur===STEPS.length-1 ? 'เปิดต้นแบบ ↗' : 'ถัดไป →';
+  $('#side').classList.remove('open');
+}
+
+$('#prev').onclick = () => go(cur-1);
+$('#next').onclick = () => cur===STEPS.length-1 ? window.open('index.html','_blank') : go(cur+1);
+$('#menu').onclick = () => $('#side').classList.toggle('open');
+$('#side').addEventListener('click', e => { const b = e.target.closest('[data-go]'); if (b) go(+b.dataset.go); });
+document.addEventListener('keydown', e => {
+  if ($('#zoom').classList.contains('on')){ if (e.key==='Escape') closeZoom(); return; }
+  if (e.target.matches?.('input')) return;
+  if (e.key==='ArrowRight' || e.key==='PageDown'){ e.preventDefault(); go(cur+1); }
+  if (e.key==='ArrowLeft' || e.key==='PageUp'){ e.preventDefault(); go(cur-1); }
+  if (e.key==='Home') go(0);
+  if (e.key==='End') go(STEPS.length-1);
+});
+// Hovering an instruction highlights its callout on the screenshot
+$('#stage').addEventListener('mouseover', e => {
+  const li = e.target.closest('li[data-n]');
+  document.querySelectorAll('#stage .mk').forEach(m => m.classList.toggle('hot', !!li && m.dataset.mk===li.dataset.n));
+});
+$('#stage').addEventListener('change', e => {
+  const c = e.target.dataset.ck; if (c===undefined) return;
+  checks[c] = e.target.checked;
+  try { localStorage.setItem(KEY, JSON.stringify(checks)); } catch {}
+  e.target.closest('label').classList.toggle('ok', e.target.checked);
+  $('#ready').classList.toggle('show', STEPS[cur].check.every((_,i)=>checks[i]));
+});
+// Click a screenshot to see it large
+const closeZoom = () => { $('#zoom').classList.remove('on'); $('#zoom').innerHTML = ''; };
+$('#stage').addEventListener('click', e => { const s = e.target.closest('[data-zoom]'); if (!s) return;
+  $('#zoom').innerHTML = s.outerHTML; $('#zoom').classList.add('on'); });
+$('#zoom').onclick = closeZoom;
+
+go((parseInt(location.hash.slice(1)) || 1) - 1);
+</script>
+</body>
+</html>

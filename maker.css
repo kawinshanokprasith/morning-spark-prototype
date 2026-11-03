@@ -23,7 +23,51 @@
 .br-bar>img{width:20px;height:20px;opacity:.75}
 .br-url{flex:1;height:30px;border-radius:15px;background:#f1f3f4;display:flex;align-items:center;gap:8px;padding:0 12px;font-size:12.5px;color:#202124;margin:0 6px}
 .br-url img{width:14px;height:14px}
-.br-url span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.br-url{position:relative}
+.br-url input{flex:1;min-width:0;border:0;outline:0;background:transparent;font:inherit;color:inherit;text-overflow:ellipsis}
+.br-url:focus-within{background:#fff;box-shadow:0 0 0 2px #1a73e8}
+.br-bar>img[data-br]{cursor:pointer;padding:2px;border-radius:50%}
+.br-bar>img[data-br]:hover{background:#eceff1}
+.br-bar>img.off{opacity:.3;pointer-events:none}
+.br-tab .fav.g{background:#e8eaed;color:#5f6368}
+.br-tab .fav.g svg{width:12px;height:12px}
+/* suggestion dropdown (address bar + Google-style search box) */
+.br-sugg{display:none;position:absolute;left:0;right:0;top:100%;margin-top:4px;background:#fff;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.22);padding:6px 0;z-index:30;text-align:left}
+.br-sugg.open{display:block}
+.br-sugg .sg{display:flex;align-items:center;gap:12px;height:36px;padding:0 14px;font-size:13.5px;cursor:default;color:#202124}
+.br-sugg .sg.on{background:#e8f0fe}
+.br-sugg .sg-i{width:18px;height:18px;flex-shrink:0;color:#5f6368;display:grid;place-items:center}
+.br-sugg .sg-i svg{width:18px;height:18px}
+.br-sugg .sg-t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.br-sugg .sg-t em{font-style:normal;color:#1a0dab;font-size:12.5px}
+/* Google-style start page */
+.g-page{flex:1;background:#fff;display:flex;flex-direction:column;font-family:Arial,"Noto Sans Thai",sans-serif;overflow:auto}
+.g-top{display:flex;justify-content:flex-end;align-items:center;gap:18px;padding:14px 22px;font-size:13px;color:#202124}
+.g-top .ico svg{width:22px;height:22px;display:block}
+.g-mid{flex:1;display:flex;flex-direction:column;align-items:center;padding-top:9vh}
+.g-word{font-family:"Product Sans",Arial,sans-serif;font-weight:700;letter-spacing:-1px;user-select:none}
+.g-word.big{font-size:84px;line-height:1;margin-bottom:26px}
+.g-word b{font-weight:inherit}
+.g-box{position:relative;display:flex;align-items:center;gap:12px;width:min(584px,84%);height:46px;border:1px solid #dfe1e5;border-radius:24px;padding:0 16px;background:#fff}
+.g-box:hover,.g-box:focus-within{box-shadow:0 1px 6px rgba(32,33,36,.28);border-color:transparent}
+.g-box:focus-within:has(.br-sugg.open){border-radius:24px 24px 0 0}
+.g-box:has(.br-sugg.open) .br-sugg{margin-top:0;border-radius:0 0 24px 24px;box-shadow:0 4px 6px rgba(32,33,36,.28);padding-bottom:10px}
+.g-box>svg{width:20px;height:20px;color:#9aa0a6;flex-shrink:0}
+.g-box input{flex:1;min-width:0;border:0;outline:0;font:16px Arial,"Noto Sans Thai",sans-serif;background:transparent}
+.g-box .ico svg{width:20px;height:20px;display:block}
+.g-btns{display:flex;gap:12px;margin-top:26px}
+.g-btns button{background:#f8f9fa;border:1px solid #f8f9fa;border-radius:4px;padding:0 16px;height:36px;font:13px Arial,"Noto Sans Thai",sans-serif;color:#3c4043;cursor:pointer}
+.g-btns button:hover{border-color:#dadce0;box-shadow:0 1px 1px rgba(0,0,0,.1)}
+.g-tiles{display:flex;gap:18px;margin-top:44px}
+.g-tiles button{width:96px;border:0;background:transparent;border-radius:8px;padding:10px 4px;display:flex;flex-direction:column;align-items:center;gap:8px;font:12px Arial,"Noto Sans Thai",sans-serif;color:#202124;cursor:pointer}
+.g-tiles button:hover{background:#f1f3f4}
+.g-tiles button span{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;color:#fff;font:600 20px Arial,"Noto Sans Thai",sans-serif}
+.g-tiles button span.add{background:#f1f3f4;color:#5f6368;font-size:26px;font-weight:400}
+.g-page.res .g-head{display:flex;align-items:center;gap:28px;padding:18px 28px;border-bottom:1px solid #ebebeb}
+.g-page.res .g-word{font-size:30px}
+.g-box.sm{width:min(520px,60%);margin:0}
+.g-res{padding:28px 150px;font-size:15px;color:#202124}
+.g-res .sub{color:#70757a;font-size:13.5px}
 
 /* Page */
 .m-page{flex:1;display:flex;min-height:0;font-family:var(--font);background:var(--page-bg)}
@@ -390,3 +434,6 @@ mark{background:none;color:var(--secondary-bg-mid);font-weight:700}
 .det .sel{height:36px}.det .sel select{font-size:13px;padding-right:28px}
 .dst{display:flex;flex-direction:column;gap:2px;min-width:0}
 .prevst{font-size:10.5px;line-height:14px;color:var(--gray-fg-mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* Link to the maker guide (guide.html) */
+.m-guide{display:block;text-align:center;margin-top:14px;font-size:14px;font-weight:500;color:var(--primary-fg-high)}

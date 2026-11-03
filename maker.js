@@ -61,22 +61,28 @@ function rv(r){ // row view: live fields from the shared article when there is o
 }
 
 /* ---------- Window ---------- */
-function openMaker(){
+function openMaker(page){
   let el = document.getElementById('maker');
   if (!el){
     el = document.createElement('div'); el.className = 'win'; el.id = 'maker';
     el.innerHTML = `<div class="br-tabs">
-        <div class="br-tab"><span class="fav"><img src="${A}w-logo-white.svg" alt=""></span><span class="t">Morning Spark</span><img class="x" src="${MA}b-close.svg" alt=""></div>
+        <div class="br-tab"><span class="fav"><img src="${A}w-logo-white.svg" alt=""></span><span class="t" id="br-title">Morning Spark</span><img class="x" src="${MA}b-close.svg" alt=""></div>
         <span class="br-new"><img src="${MA}b-add.svg" alt=""></span><div class="grow"></div>
         <div class="os-ctl"><button data-mwin="min">${ctlSvg.min}</button><button data-mwin="max">${ctlSvg.max}</button><button class="x" data-mwin="close">${ctlSvg.x}</button></div></div>
-      <div class="br-bar"><img src="${MA}b-back.svg" alt=""><img src="${MA}b-fwd.svg" alt=""><img src="${MA}b-refresh.svg" alt="">
-        <div class="br-url"><img src="${MA}b-lock.svg" alt=""><span id="m-url"></span></div>
+      <div class="br-bar"><img src="${MA}b-back.svg" alt="" data-br="back"><img src="${MA}b-fwd.svg" alt="" data-br="fwd"><img src="${MA}b-refresh.svg" alt="" data-br="reload">
+        <div class="br-url"><img src="${MA}b-lock.svg" alt=""><input id="m-url" autocomplete="off" spellcheck="false" placeholder="ค้นหาใน Google หรือพิมพ์ URL" aria-label="Address bar"><div class="br-sugg" id="br-sugg-a"></div></div>
         <img src="${MA}b-share.svg" alt=""><img src="${MA}b-bookmark.svg" alt=""><img src="${MA}b-more.svg" alt=""></div>
       <div class="m-page" id="m-page"></div>`;
     $('#windows').appendChild(el);
     makeDraggable(el, el.querySelector('.br-tabs'));
     makeResizable(el, 800, 500);
     el.addEventListener('pointerdown', mReorder);
+    el.addEventListener('click', brClick);
+    el.addEventListener('mousedown', e => { if (e.target.closest('.br-sugg')) e.preventDefault(); });
+    el.addEventListener('keydown', brKey);
+    el.addEventListener('focusin', brFocus);
+    el.addEventListener('focusout', brBlur);
+    el.addEventListener('input', brInput);
     el.addEventListener('click', mClick);
     el.addEventListener('input', mInput);
     el.addEventListener('change', mChange);
@@ -84,15 +90,18 @@ function openMaker(){
     ['dragover','dragleave','drop'].forEach(t => el.addEventListener(t, mDrag));
     place(el);
   }
-  el.classList.remove('hidden'); focusWin(el); mRender();
+  el.classList.remove('hidden'); focusWin(el);
+  if (!el.dataset.started){ el.dataset.started = 1; B.page = page; B.hist = [{page}]; B.i = 0; } // first open: start page, or straight to Admin
+  else if (page==='admin' && B.page!=='admin') brGo({page:'admin'}); // Admin shortcut: same window, same tab
+  brShow();
 }
 
 /* ---------- Views ---------- */
 function mRender(){
   const pg = $('#m-page'); if (!pg) return;
-  const urls = {login:'login.jsp', list:'articles', form: M.form?.rowId ? `articles/edit.jsp?ref=${M.form.ref}` : 'articles/create.jsp'};
-  $('#m-url').textContent = 'https://morningspark.krungthai/MSweb/maker/' + urls[M.view];
+  if (B.page!=='admin') return; // another page is showing; Admin redraws when navigated back
   const keep = pg.querySelector('.m-main')?.scrollTop || 0;
+  brSync();
   if (M.view==='login'){ pg.innerHTML = vMLogin() + vModal(); return; }
   pg.innerHTML = vSide() + `<div class="m-main"><div class="m-zoom">${M.view==='list'?vList():vForm()}</div></div>` + vModal() + vPreview();
   if (M._keepScroll) pg.querySelector('.m-main').scrollTop = keep;
@@ -109,6 +118,8 @@ function vMLogin(){
       <div class="field" id="mf-pw"><label>รหัสผ่าน <i>*</i></label><div class="input"><input id="m-pw" type="password" placeholder="กรอกรหัสผ่าน"><button type="button" data-m="eye"><img src="${A}icon-eye.svg" alt=""></button></div><div class="msg">กรุณากรอกรหัสผ่าน</div></div>
       <button class="btn-primary" type="submit" id="m-login-btn">เข้าสู่ระบบ</button>
     </div>
+    <p class="try-hint">ทดสอบ: ใช้อีเมล <b>ชื่อ@krungthai.com</b> (หรือพิมพ์แค่ส่วนหน้า @) · รหัสผ่านขอจากผู้ดูแลการทดสอบ</p>
+    <a class="m-guide" href="guide.html" target="_blank" rel="noopener">ดูคู่มือการใช้งานสำหรับผู้เขียนประกาศ ↗</a>
     <div class="version">Version 0.1.0 <img src="${A}dot.svg" alt=""> Build 20260520020402</div>
     <img class="ktb" src="${MA}ktb-logo-color.png" alt="Krungthai">
   </form></div></div>`;
@@ -120,6 +131,7 @@ function vSide(){
     <hr>
     <button class="it on" data-m="home"><img src="${MA}megaphone-fill.svg" alt=""><span class="lbl">ประกาศ</span></button>
     <div class="sp"></div>
+    <a class="it" href="guide.html" target="_blank" rel="noopener" data-tip="คู่มือการใช้งาน" style="color:inherit;text-decoration:none"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><path d="M9.2 9a3 3 0 015.6 1c0 2-3 2.5-3 4.5"/><circle cx="12" cy="17.5" r=".6" fill="#fff"/></svg><span class="lbl">คู่มือการใช้งาน</span></a>
     <div class="it"><svg width="24" height="24" viewBox="0 0 24 24" style="flex-shrink:0"><circle cx="12" cy="12" r="11" fill="#fff"/><circle cx="12" cy="9.5" r="3.6" fill="#359fe1"/><path d="M5.2 19a7.5 7.5 0 0113.6 0A10.9 10.9 0 0112 23a10.9 10.9 0 01-6.8-4z" fill="#359fe1"/></svg><span class="lbl who">${ME}<br>NRR Compliance</span></div>
     <hr>
     <button class="it" data-m="logout" data-tip="ออกจากระบบ"><img src="${MA}logout.svg" alt=""><span class="lbl">ออกจากระบบ</span></button>
