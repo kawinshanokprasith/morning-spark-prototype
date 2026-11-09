@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>คู่มือผู้อ่านประกาศ · Morning Spark</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* Tokens from the Morning Spark Figma file (same as index.html) */
+:root{
+  --primary-bg-high:#1e87cb; --primary-bg-mid:#359fe1; --primary-bg-low:#d4ecfb; --primary-bg-lowest:#eef7fd;
+  --primary-fg-highest:#156dab; --primary-fg-high:#1e87cb;
+  --secondary-bg-mid:#f89350; --secondary-bg-lowest:#fef7f0; --secondary-border-low:#fdebd8; --secondary-fg-highest:#bc6220;
+  --error-fg-high:#c84341; --error-bg-lowest:#fdf1f1; --ok:#1f9d55;
+  --gray-fg-high:#1a1e28; --gray-fg-mid:#62707e; --gray-fg-low:#8990a2;
+  --gray-border-light:#c9cdd8; --gray-border-divider:#e1e4ec; --gray-bg-light:#f7f8fb;
+  --shadow-4:0 1px 2px rgba(27,29,31,.08),0 8px 24px rgba(27,29,31,.12);
+  --font:"Krungthai Fast","Noto Sans Thai",system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--font);color:var(--gray-fg-high);background:var(--gray-bg-light);font-size:16px;line-height:1.6;display:flex;flex-direction:column}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+a{color:var(--primary-fg-high)}
+b{font-weight:700}
+
+/* Top bar */
+.top{background:var(--primary-bg-high);color:#fff;display:flex;align-items:center;gap:16px;padding:12px 24px;flex-shrink:0}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:18px}
+.brand img{height:22px}
+.brand small{font-weight:400;opacity:.85;font-size:15px}
+.top .grow{flex:1}
+.top a.open{color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,.6);border-radius:8px;padding:6px 14px;font-size:14px;font-weight:500}
+.top a.open:hover{background:rgba(255,255,255,.14)}
+.menu-btn{display:none;color:#fff;font-size:22px;line-height:1}
+.prog{height:6px;background:var(--primary-bg-low);flex-shrink:0}
+.prog i{display:block;height:100%;background:var(--secondary-bg-mid);transition:width .25s}
+
+.layout{flex:1;display:flex;min-height:0}
+/* Step list */
+.side{width:300px;flex-shrink:0;background:#fff;border-right:1px solid var(--gray-border-divider);overflow:auto;padding:16px 12px 24px}
+.side h4{font-size:13px;color:var(--gray-fg-low);font-weight:700;letter-spacing:.02em;margin:16px 10px 6px}
+.side h4:first-child{margin-top:0}
+.side button{display:flex;gap:10px;width:100%;text-align:left;padding:7px 10px;border-radius:8px;font-size:15px;line-height:1.4;color:var(--gray-fg-mid)}
+.side button:hover{background:var(--primary-bg-lowest)}
+.side button .n{flex-shrink:0;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;background:var(--gray-bg-light);border:1px solid var(--gray-border-light)}
+.side button.done .n{background:var(--primary-bg-low);border-color:var(--primary-bg-low);color:var(--primary-fg-highest)}
+.side button.on{background:var(--primary-bg-lowest);color:var(--primary-fg-highest);font-weight:700}
+.side button.on .n{background:var(--primary-bg-high);border-color:var(--primary-bg-high);color:#fff}
+
+/* Main */
+main{flex:1;display:flex;flex-direction:column;min-width:0}
+.stage{flex:1;overflow:auto;padding:24px 32px}
+.head{display:flex;align-items:baseline;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.chip{font-size:13px;font-weight:700;color:var(--secondary-fg-highest);background:var(--secondary-bg-lowest);border:1px solid var(--secondary-border-low);border-radius:99px;padding:2px 12px}
+.head h1{font-size:28px;line-height:1.3}
+.body{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:28px;align-items:start}
+.body.text{grid-template-columns:minmax(0,860px)}
+
+/* Screenshot with callouts */
+.shot{position:relative;border-radius:10px;overflow:hidden;box-shadow:var(--shadow-4);background:#fff;cursor:zoom-in}
+.shot img{display:block;width:100%;height:auto}
+.mk{position:absolute;border:3px solid var(--secondary-bg-mid);border-radius:8px;box-shadow:0 0 0 4px rgba(248,147,80,.25);pointer-events:none;transition:box-shadow .2s,border-color .2s}
+.mk span{position:absolute;left:-14px;top:-14px;width:28px;height:28px;border-radius:50%;background:var(--secondary-bg-mid);color:#fff;font-weight:700;font-size:15px;display:grid;place-items:center;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.mk.hot{border-color:var(--primary-bg-high);box-shadow:0 0 0 6px rgba(30,135,203,.35)}
+.mk.hot span{background:var(--primary-bg-high)}
+.zoomhint{font-size:13px;color:var(--gray-fg-low);margin-top:8px}
+
+/* Instructions */
+ol.steps{list-style:none;display:flex;flex-direction:column;gap:10px}
+ol.steps li{display:flex;gap:12px;background:#fff;border:1px solid var(--gray-border-divider);border-radius:10px;padding:12px 14px}
+ol.steps li .b{flex-shrink:0;width:28px;height:28px;border-radius:50%;background:var(--secondary-bg-mid);color:#fff;font-weight:700;font-size:15px;display:grid;place-items:center}
+ol.steps li .b.dot{background:var(--gray-border-light)}
+ol.steps li[data-n]:hover{border-color:var(--primary-bg-high)}
+.ui{display:inline-block;background:var(--primary-bg-lowest);color:var(--primary-fg-highest);border:1px solid var(--primary-bg-low);border-radius:6px;padding:0 6px;font-weight:500;white-space:nowrap}
+.tip{margin-top:14px;background:var(--secondary-bg-lowest);border:1px solid var(--secondary-border-low);border-radius:10px;padding:12px 14px}
+.tip b:first-child{color:var(--secondary-fg-highest);display:block;margin-bottom:2px}
+.warn{margin-top:14px;background:var(--error-bg-lowest);border:1px solid #f5cfcf;border-radius:10px;padding:12px 14px}
+.warn b:first-child{color:var(--error-fg-high);display:block;margin-bottom:2px}
+
+/* Text-only steps */
+.card{background:#fff;border:1px solid var(--gray-border-divider);border-radius:12px;padding:20px 24px;margin-bottom:16px}
+.card h3{font-size:18px;margin-bottom:8px}
+.card ul{padding-left:22px;display:flex;flex-direction:column;gap:6px}
+.hero{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:28px;align-items:center}
+.hero p{font-size:18px;margin-bottom:12px}
+
+/* Bottom nav */
+.nav{flex-shrink:0;background:#fff;border-top:1px solid var(--gray-border-divider);display:flex;align-items:center;gap:16px;padding:12px 32px}
+.nav .grow{flex:1;text-align:center;color:var(--gray-fg-low);font-size:14px}
+.btn{height:48px;min-width:150px;border-radius:10px;font-size:17px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:0 22px}
+.btn.pri{background:var(--primary-bg-high);color:#fff}
+.btn.pri:hover{background:var(--primary-fg-highest)}
+.btn.out{border:1px solid var(--primary-bg-high);color:var(--primary-fg-high);background:#fff}
+.btn.out:hover{background:var(--primary-bg-lowest)}
+.btn:disabled{opacity:.35;cursor:default}
+kbd{font:12px/1 var(--font);border:1px solid var(--gray-border-light);border-bottom-width:2px;border-radius:4px;padding:2px 5px;background:#fff}
+
+/* Zoom */
+.zoom{position:fixed;inset:0;background:rgba(10,20,40,.88);display:none;place-items:center;z-index:50;padding:24px;cursor:zoom-out}
+.zoom.on{display:grid}
+.zoom .shot{max-width:min(96vw,calc(92vh*1.6));width:100%;cursor:zoom-out;box-shadow:none}
+
+@media (max-width:1100px){
+  .body,.hero{grid-template-columns:1fr}
+  .side{position:fixed;top:0;bottom:0;left:0;z-index:40;transform:translateX(-100%);transition:transform .2s;box-shadow:var(--shadow-4)}
+  .side.open{transform:none}
+  .menu-btn{display:block}
+  .stage{padding:16px}
+  .nav{padding:10px 16px}
+  .btn{min-width:110px}
+  .top a.open{display:none}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <button class="menu-btn" id="menu" aria-label="รายการขั้นตอน">☰</button>
+  <div class="brand"><img src="assets/logo-sun-white.svg" alt="">Morning Spark <small>· คู่มือสำหรับพนักงานสาขา</small></div>
+  <div class="grow"></div>
+  <a class="open" href="index.html?for=branch" target="_blank" rel="noopener">เปิด Morning Spark ↗</a>
+</header>
+<div class="prog"><i id="prog"></i></div>
+<div class="layout">
+  <nav class="side" id="side" aria-label="ขั้นตอน"></nav>
+  <main>
+    <div class="stage" id="stage"></div>
+    <div class="nav">
+      <button class="btn out" id="prev">← ย้อนกลับ</button>
+      <div class="grow" id="count"></div>
+      <button class="btn pri" id="next">ถัดไป →</button>
+    </div>
+  </main>
+</div>
+<div class="zoom" id="zoom" aria-hidden="true"></div>
+
+<script>
+// Each step: chapter, title, screenshot + callouts ([n, x%, y%, w%, h%] of the screenshot), numbered instructions, tip.
+// Feed and article screenshots use sample articles; the ?for=branch link shows real articles only.
+const G = 'assets/guide/';
+const ui = s => `<span class="ui">${s}</span>`;
+const STEPS = [
+  {ch:'เริ่มต้น', t:'Morning Spark คืออะไร', hero:true, img:'b4-article.jpg', html:`
+    <p><b>Morning Spark</b> คือที่รวมประกาศด้านกฎเกณฑ์และผลิตภัณฑ์สำหรับพนักงานสาขา เปิดมาแล้วรู้เลยว่ามีอะไรเปลี่ยน และต้องทำอะไร</p>
+    <p>ตอนนี้เป็นเพียง <b>ต้นแบบเพื่อทดสอบ</b> เราอยากรู้ว่าคุณอ่านแล้วเข้าใจไหม ขอให้อ่านเหมือนวันทำงานปกติ ไม่มีถูกหรือผิด</p>
+    <div class="tip"><b>วิธีใช้คู่มือ</b>ใช้เวลาประมาณ 2 นาที กด ${ui('ถัดไป →')} ทีละหน้า · คลิกภาพเพื่อขยาย</div>`},
+  {ch:'เริ่มต้น', t:'เปิดลิงก์ แล้วเปิด Morning Spark', img:'b1-desktop.jpg',
+    marks:[[1,0.6,57.6,6.1,10.7],[2,75,64.9,23.6,27.6],[3,76,1.8,22.9,21.7]],
+    items:[[0,`เปิดลิงก์ที่ได้รับ (หรือปุ่ม ${ui('เปิด Morning Spark ↗')} มุมขวาบนของคู่มือนี้) จะเห็นหน้าจอคล้ายคอมพิวเตอร์ ซึ่งเป็นหน้าจอจำลอง`],
+           [1,`คลิกไอคอน ${ui('Morning Spark')} ครั้งเดียว`],
+           [2,`หรือคลิกปุ่ม ${ui('อ่านประกาศทั้งหมด')} ที่ Widget มุมขวาล่าง`],
+           [3,`การ์ด ${ui('เริ่มอ่านประกาศ Morning Spark')} มุมขวาบนสรุปขั้นตอนนี้ไว้ให้ ปิดได้ด้วย ✕`]],
+    tip:`<b>ยังเห็น 0 ประกาศใช่ไหม</b>ก่อนเข้าสู่ระบบ Widget จะขึ้น ${ui('ยังไม่มีประกาศสำหรับกลุ่มของคุณ')} เป็นเรื่องปกติ เข้าสู่ระบบแล้วประกาศจะขึ้นมา`},
+  {ch:'เริ่มต้น', t:'เข้าสู่ระบบด้วยรหัสกลุ่ม', img:'b2-login.jpg',
+    marks:[[1,34.9,36.6,30.3,8.7],[2,34.9,47,30.3,8.7],[3,34.9,57.4,30.3,5.3]],
+    items:[[1,`ช่อง <b>รหัสพนักงาน</b> ใส่ <b>รหัสกลุ่มที่ได้รับ</b> เช่น loan01`],
+           [2,`ช่อง <b>รหัสผ่าน</b> ใส่รหัสผ่านที่ได้รับจากผู้ดูแลการทดสอบ`],
+           [3,`กด ${ui('เข้าสู่ระบบ')}`]],
+    warn:`<b>อย่าใช้รหัสจริงของคุณ</b>ไม่ต้องใส่รหัสพนักงานหรือรหัสผ่านจริงของธนาคาร ใช้เฉพาะรหัสทดสอบที่ได้รับเท่านั้น และถ้าเข้าไม่ได้ให้ถามผู้ดูแลการทดสอบ`},
+  {ch:'อ่านประกาศ', t:'หน้ารวมประกาศ', img:'b3-feed.jpg',
+    marks:[[1,20.7,14.2,58.6,22.9],[2,72,3.5,10,3],[3,20.7,46.4,58.6,22]],
+    items:[[1,`ค้นหาจากชื่อหรือข้อมูลในประกาศ และกรองตามประเภท การอ่าน หรือสถานะได้`],
+           [2,`มุมขวาบนบอก ${ui('กลุ่มผู้รับ')} ที่คุณใช้อยู่ คุณจะเห็นเฉพาะประกาศที่ส่งถึงกลุ่มนี้`],
+           [3,`คลิกการ์ดเพื่อเปิดอ่าน เริ่มจาก ${ui('ประกาศสำคัญ')} ด้านบนได้เลย เลื่อนลงเพื่อดูประกาศอื่น`]],
+    tip:`<b>ภาพเป็นข้อมูลตัวอย่าง</b>ของจริงจะเป็นประกาศที่ทีมผู้เขียนส่งถึงกลุ่มของคุณ ถ้ายังไม่มีการ์ด แปลว่ายังไม่มีประกาศสำหรับกลุ่มนี้`},
+  {ch:'อ่านประกาศ', t:'อ่านแท็บ ข้อมูลสรุป', img:'b4-article.jpg',
+    marks:[[1,15.8,33.3,68.3,5.3],[2,15.8,40.4,68.3,13.6]],
+    items:[[1,`ประกาศมี 2 แท็บ คือ ${ui('ข้อมูลสรุป')} และ ${ui('ข้อมูลรูปภาพ')} จุดสีแดงบนแท็บแปลว่ามีการเปลี่ยนแปลงที่ยังไม่ได้ดู`],
+           [2,`เริ่มจาก ${ui('สรุปประกาศ')} แล้วเลื่อนลงดูเอกสาร รายละเอียด และ ${ui('สอบถามข้อมูลเพิ่มเติม')} ด้านล่าง`],
+           [0,`คลิกชื่อเอกสารเพื่อเปิดเอกสาร · ป้าย ${ui('อัปเดต')} และ ${ui('ยกเลิกใช้')} บอกว่าส่วนนั้นเปลี่ยนเมื่อไร`]]},
+  {ch:'อ่านประกาศ', t:'ดูแท็บ ข้อมูลรูปภาพ แล้วบอกเราว่าคิดอย่างไร', img:'b5-images.jpg',
+    marks:[[1,15.8,33.3,68.3,5.3]],
+    items:[[1,`คลิก ${ui('ข้อมูลรูปภาพ')} เพื่อดู Infographic ของประกาศ บางประกาศอาจไม่มีรูป`],
+           [0,`กดลูกศร ← มุมซ้ายบนเพื่อกลับไปหน้ารวมประกาศ แล้วลองอ่านเรื่องอื่นต่อ`],
+           [0,`ปิดหน้าต่างด้วย ✕ แล้วเปิดใหม่ จะต้องเข้าสู่ระบบอีกครั้ง`]],
+    // Win fills this in before sending the link to branch staff
+    tip:`<b>บอกเราว่าคิดอย่างไร</b>[วินเติมวิธีส่งความคิดเห็นตรงนี้]`},
+];
+
+const $ = s => document.querySelector(s);
+let cur = 0;
+
+function renderSide(){
+  let ch = '', h = '';
+  STEPS.forEach((s,i) => {
+    if (s.ch !== ch){ ch = s.ch; h += `<h4>${ch}</h4>`; }
+    h += `<button data-go="${i}" class="${i===cur?'on':i<cur?'done':''}"${i===cur?' aria-current="step"':''}><span class="n">${i+1}</span><span>${s.t}</span></button>`;
+  });
+  $('#side').innerHTML = h;
+  $('#side .on')?.scrollIntoView({block:'nearest'});
+}
+const shotHtml = s => `<div class="shot" data-zoom><img src="${G}${s.img}" alt="ภาพหน้าจอ: ${s.t}">${(s.marks||[]).map(([n,x,y,w,h]) =>
+  `<div class="mk" data-mk="${n}" style="left:${x}%;top:${y}%;width:${w}%;height:${h}%"><span>${n}</span></div>`).join('')}</div>`;
+function renderStage(){
+  const s = STEPS[cur];
+  let body;
+  if (s.hero) body = `<div class="hero"><div>${s.html}</div><div>${shotHtml(s)}<div class="zoomhint">ตัวอย่างประกาศที่ผู้รับจะเห็น</div></div></div>`;
+  else if (!s.img) body = `<div class="body text"><div>${s.html}</div></div>`;
+  else body = `<div class="body"><div>${shotHtml(s)}<div class="zoomhint">คลิกภาพเพื่อขยาย</div></div><div>
+    <ol class="steps">${s.items.map(([n,t]) => `<li${n?` data-n="${n}"`:''}><span class="b${n?'':' dot'}">${n||'•'}</span><span>${t}</span></li>`).join('')}</ol>
+    ${s.tip?`<div class="tip">${s.tip}</div>`:''}${s.warn?`<div class="warn">${s.warn}</div>`:''}</div></div>`;
+  $('#stage').innerHTML = `<div class="head"><span class="chip">${s.ch}</span><h1>${s.t}</h1></div>${body}`;
+  $('#stage').scrollTop = 0;
+  // Preload the next screenshot so clicking ถัดไป feels instant
+  const nx = STEPS[cur+1]; if (nx?.img) new Image().src = G + nx.img;
+}
+function go(i){
+  cur = Math.max(0, Math.min(STEPS.length-1, i));
+  history.replaceState(null, '', '#' + (cur+1));
+  renderSide(); renderStage();
+  $('#prog').style.width = ((cur+1)/STEPS.length*100) + '%';
+  $('#count').textContent = `ขั้นตอน ${cur+1} จาก ${STEPS.length}`;
+  $('#prev').disabled = cur===0;
+  $('#next').textContent = cur===STEPS.length-1 ? 'เปิด Morning Spark ↗' : 'ถัดไป →';
+  $('#side').classList.remove('open');
+}
+
+$('#prev').onclick = () => go(cur-1);
+$('#next').onclick = () => cur===STEPS.length-1 ? window.open('index.html?for=branch','_blank') : go(cur+1);
+$('#menu').onclick = () => $('#side').classList.toggle('open');
+$('#side').addEventListener('click', e => { const b = e.target.closest('[data-go]'); if (b) go(+b.dataset.go); });
+document.addEventListener('keydown', e => {
+  if ($('#zoom').classList.contains('on')){ if (e.key==='Escape') closeZoom(); return; }
+  if (e.target.matches?.('input')) return;
+  if (e.key==='ArrowRight' || e.key==='PageDown'){ e.preventDefault(); go(cur+1); }
+  if (e.key==='ArrowLeft' || e.key==='PageUp'){ e.preventDefault(); go(cur-1); }
+  if (e.key==='Home') go(0);
+  if (e.key==='End') go(STEPS.length-1);
+});
+// Hovering an instruction highlights its callout on the screenshot
+$('#stage').addEventListener('mouseover', e => {
+  const li = e.target.closest('li[data-n]');
+  document.querySelectorAll('#stage .mk').forEach(m => m.classList.toggle('hot', !!li && m.dataset.mk===li.dataset.n));
+});
+// Click a screenshot to see it large
+const closeZoom = () => { $('#zoom').classList.remove('on'); $('#zoom').innerHTML = ''; };
+$('#stage').addEventListener('click', e => { const s = e.target.closest('[data-zoom]'); if (!s) return;
+  $('#zoom').innerHTML = s.outerHTML; $('#zoom').classList.add('on'); });
+$('#zoom').onclick = closeZoom;
+
+go((parseInt(location.hash.slice(1)) || 1) - 1);
+</script>
+</body>
+</html>

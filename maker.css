@@ -267,6 +267,7 @@ textarea.fin{font:inherit;font-size:14px;height:110px;padding:10px 12px;resize:v
 .sb{padding:12px;display:flex;flex-direction:column;gap:12px}
 .dblk{background:var(--primary-bg-lowest);border-radius:8px;padding:12px 12px 8px;display:flex;flex-direction:column;gap:8px}
 .drow{display:grid;grid-template-columns:20px 130px 150px 1.3fr 1fr 32px 28px;gap:10px;align-items:end}
+.drow.top{align-items:start}
 .drow .mv{color:var(--gray-fg-mid);padding-bottom:8px}
 .drow .tbtn,.drow .acc{height:40px}
 .drow .acc{display:grid;place-items:center;width:28px}

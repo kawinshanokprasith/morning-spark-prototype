@@ -188,8 +188,8 @@ async function loadReader(){
   const list = data.map(d => ({...d.article, id:1e5 + d.id, _seen:old.get(1e5 + d.id)?._seen}));
   list.forEach(a => { a.read = seen[a.id] === (a.rev||0); });
   await signArticles(SB.reader, list);
-  // Sample articles only until real ones exist (for anyone, not just this group)
-  ARTICLES.splice(0, ARTICLES.length, ...(list.length || any.data ? list : DEMO));
+  // Sample articles only until real ones exist (for anyone, not just this group); never on the branch link
+  ARTICLES.splice(0, ARTICLES.length, ...(list.length || any.data || FOR==='branch' ? list : DEMO));
   renderWidget(); updateTaskbar();
   const app = $('#app');
   if (app && !app.classList.contains('hidden') && state.screen!=='login'){
@@ -204,7 +204,7 @@ if (ONLINE){
   SB = {maker: supabase.createClient(url, key, {auth:{storageKey:'ms-maker'}}),
         reader: supabase.createClient(url, key, {auth:{storageKey:'ms-reader'}})};
   (async () => {
-    const {data:{session}} = await SB.maker.auth.getSession();
+    const {data:{session}} = FOR==='branch' ? {data:{}} : await SB.maker.auth.getSession();   // branch link: no Maker
     const who = session && await makerName(session.user.email);
     if (who){ ME = who; await loadMaker(); Object.assign(M, {loggedIn:true, view:'list'}); mRender(); }
     await loadReader();

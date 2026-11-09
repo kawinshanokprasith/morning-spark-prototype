@@ -36,9 +36,9 @@ const docUrl = n => 'https://intranet.krungthai/compliance/docs/' + encodeURICom
 const MK = {rows:[], seq:2};
 // Online, the table shows only the makers' real articles (loaded by store.js)
 if (!ONLINE) ARTICLES.forEach((a,i) => {
-  const d = 18 - i;
-  MK.rows.push({id:'r'+a.id, aid:a.id, ref:`6907${pad(d)}-${String(i%3?i+1:2).padStart(3,'0')}`, mstatus:'published',
-    createdBy:i%3===1?ME:'Sorrawit J.', created:`${pad(d)}/07/2569 16:16:32`, updatedBy:ME, updated:`${pad(d+1)}/07/2569 09:10:32`, ts:d+1});
+  const d = 18 - Math.floor(i/2); // two sample articles a day, so 20+ samples keep valid July dates
+  MK.rows.push({id:'r'+a.id, aid:a.id, ref:`6907${pad(d)}-${String(i+1).padStart(3,'0')}`, mstatus:'published',
+    createdBy:i%3===1?ME:'Sorrawit J.', created:`${pad(d)}/07/2569 ${i%2?'10':'16'}:16:32`, updatedBy:ME, updated:`${pad(d+1)}/07/2569 09:10:32`, ts:d+1});
 });
 [
   {ref:'690713-D014', type:'practice', title:'การเปิดบัญชีเงินฝาก Next savings', start:'01/08/2569', end:'', mstatus:'scheduled', sched:'12/09/2569', lockedBy:'Sirin W.', createdBy:'Sorrawit J.', created:'13/07/2569 16:16:32', updated:'18/07/2569 09:10:32', ts:18.5},
@@ -116,9 +116,10 @@ function vMLogin(){
     <div class="form">
       <div class="field" id="mf-id"><label>รหัสพนักงาน (Employee AD) <i>*</i></label><div class="input"><input id="m-emp" placeholder="กรอกรหัสพนักงาน (Employee AD)" autocomplete="off"></div><div class="msg">กรุณากรอกรหัสพนักงาน</div></div>
       <div class="field" id="mf-pw"><label>รหัสผ่าน <i>*</i></label><div class="input"><input id="m-pw" type="password" placeholder="กรอกรหัสผ่าน"><button type="button" data-m="eye"><img src="${A}icon-eye.svg" alt=""></button></div><div class="msg">กรุณากรอกรหัสผ่าน</div></div>
+      ${rolePicker('role-m', MAKER_ROLES)}
       <button class="btn-primary" type="submit" id="m-login-btn">เข้าสู่ระบบ</button>
     </div>
-    <p class="try-hint">ทดสอบ: ใช้อีเมล <b>ชื่อ@krungthai.com</b> (หรือพิมพ์แค่ส่วนหน้า @) · รหัสผ่านขอจากผู้ดูแลการทดสอบ</p>
+    <p class="try-hint">ทดสอบ: ใช้อีเมล (หรือพิมพ์แค่ส่วนหน้า @)<br><b>chutinant.khemaphiruk@krungthai.com</b> (พี่เอ)<br><b>uraswee.cheanbutra@krungthai.com</b> (พี่แก้ว)<br>${ONLINE ? 'รหัสผ่าน: <b>spark2569</b>' : 'รหัสผ่านใดก็ได้ (ข้อมูลตัวอย่าง)'}</p>
     <a class="m-guide" href="guide.html" target="_blank" rel="noopener">ดูคู่มือการใช้งานสำหรับผู้เขียนประกาศ ↗</a>
     <div class="version">Version 0.1.0 <img src="${A}dot.svg" alt=""> Build 20260520020402</div>
     <img class="ktb" src="${MA}ktb-logo-color.png" alt="Krungthai">
@@ -145,7 +146,7 @@ function vList(){
   const body = M.tab==='articles' ? vArticles() : M.tab==='docs' ? vDocs() : vImages();
   return `<div class="m-wrap">
     <div class="m-head"><div><h1>ประกาศ</h1><p>ค้นหาและจัดการประกาศทั้งหมดใน Morning Spark</p></div>
-      <div class="m-actions"><button class="btn sec" data-m="report"><img src="${MA}download.svg" alt="">ดาวน์โหลดรายงาน</button>
+      <div class="m-actions"><button class="btn sec" data-m="logout"><img src="${MA}logout.svg" alt="" style="filter:brightness(0) saturate(100%) invert(39%) sepia(80%) saturate(1200%) hue-rotate(181deg)">ออกจากระบบ</button><button class="btn sec" data-m="report"><img src="${MA}download.svg" alt="">ดาวน์โหลดรายงาน</button>
       <button class="btn pri" data-m="create"><img src="${MA}plus.svg" alt="" style="filter:brightness(0) invert(1)">สร้างประกาศ</button></div></div>
     <div class="panel"><div class="m-tabs">${tabs.map(t=>`<button class="m-tab${M.tab===t[0]?' on':''}" data-mtab="${t[0]}"><img src="${MA}${t[1]}" alt="">${t[2]}</button>`).join('')}</div>${body}</div>
   </div>`;
@@ -307,7 +308,7 @@ function vSummaryTab(f){
         <button class="acc" data-togsec="${i}"><img src="${A}icon-chevron-up.svg" alt=""></button></div>
       <div class="sb">${s.docs.map((d,j)=>{ const D=`${P}.docs.${j}`; return `<div class="dblk${d.open?'':' closed'}" data-di="${j}">
           <div class="drow"><span></span>${L('สถานะเอกสาร',1)}${L('ประเภทเอกสาร',1)}${L('Intranet URL',1,'วางลิงก์เอกสารจาก Intranet แล้วกดไอคอนค้นหาเพื่อดึงชื่อเอกสาร')}${L('ชื่อเอกสาร',1, ONLINE ? 'พิมพ์ชื่อเอกสาร หรือกดไอคอนค้นหาเพื่อดึงชื่อจากลิงก์' : 'ระบบดึงชื่อเอกสารจาก Intranet ให้อัตโนมัติ')}<span></span><span></span></div>
-          <div class="drow" style="margin-top:-6px">${GRIP}
+          <div class="drow top" style="margin-top:-6px">${GRIP}
             ${fld(D+'.status', fsel(D+'.status', DOC_STATUS) + prevHint(d.prev))}${fld(D+'.dtype', fsel(D+'.dtype', DOC_TYPES))}
             ${fld(D+'.url', `<div class="urlbox">${inp(D+'.url','https://intranet.krungthai/...')}<button type="button" data-fetch="${D}" data-tip="ดึงชื่อเอกสาร"><img src="${A}icon-search.svg" alt=""></button></div>`)}
             ${fld(D+'.name', inp(D+'.name', ONLINE ? 'พิมพ์ชื่อเอกสาร' : 'ชื่อเอกสาร', ONLINE ? '' : 'disabled'))}
@@ -358,9 +359,6 @@ function vModal(){
       <label class="opt"><input type="radio" name="notify" value="1" ${m.notify?'checked':''} data-notify="1"><div><b>แจ้งเตือนผู้รับ</b><small>ประกาศจะกลับมาเป็น “ยังไม่อ่าน” พร้อมป้าย อัปเดต ใน Widget และหน้า Home feed</small></div></label>
       <label class="opt"><input type="radio" name="notify" value="0" ${m.notify?'':'checked'} data-notify="0"><div><b>ไม่แจ้งเตือน</b><small>สำหรับการแก้ไขเล็กน้อย เช่น แก้คำผิด ผู้รับจะเห็นเนื้อหาใหม่โดยไม่มีการแจ้งเตือน</small></div></label>
       <div class="ft"><button class="btn out" data-m="close">ยกเลิก</button><button class="btn pri" data-m="dosaveedit">บันทึก</button></div></div>`;
-  if (m.kind==='published') h = `<div class="m-mod w"><div class="okic">✓</div><h3 style="justify-content:center">ตั้งเวลาเผยแพร่แล้ว</h3>
-      <p style="text-align:center">“${esc(m.title)}” จะส่งถึงผู้รับ ${m.groups} กลุ่ม ในวันที่ <b>${m.date}</b> เวลา 06:00 น.</p>
-      <div class="ft" style="justify-content:center"><button class="btn out" data-m="close">กลับหน้ารายการ</button><button class="btn pri" data-m="deliver">จำลองการส่งตอน 06:00 น.</button></div></div>`;
   if (!h) h = libModal(m);
   return `<div class="m-ov">${h}</div>`;
 }
@@ -491,8 +489,8 @@ function mClick(e){
       setTimeout(()=>$('#maker .fld.err')?.scrollIntoView({behavior:'smooth', block:'center'}), 30); return; }
     const row = MK.rows.find(x=>x.id===f.rowId);
     if (row && row.mstatus==='published'){ M.modal = {kind:'notify', notify:true}; return rerender(); }
-    const r = saveRow('scheduled'); r.sched = pubDateOf(f); r.ref = r.ref.replace('-D','-'); if (ONLINE) dbSaveRow(r);
-    M.modal = {kind:'published', row:r, title:f.title, date:r.sched, groups:f.groups.length}; M.view = 'list'; M.form = null; return mRender();
+    const r = saveRow('published'); r.ref = r.ref.replace('-D','-');
+    return deliverNow(r, f.groups.length);
   }
   if (d.m==='dosaveedit'){
     const row = MK.rows.find(x=>x.id===f.rowId), a = art(row), n = toArticle(f, a), notify = M.modal.notify;
@@ -504,13 +502,14 @@ function mClick(e){
   closeMenus(e);
 }
 function closeMenus(e){ if (M.form?.groupMenu && !e.target.closest('.ms-menu,.ms-box')){ M.form.groupMenu = false; rerender(); } }
-function mDeliver(){
-  const m = M.modal, r = m.row, a = toArticle(r._form, null);
-  a.date = 'ประกาศ ' + r.sched;
-  if (ONLINE){ r.dbArt = a; r._form = settledForm(r._form); r.mstatus = 'published'; r.sched = null; touch(r); dbSaveRow(r); }
-  else { ARTICLES.unshift(a); r.aid = a.id; r.mstatus = 'published'; r.sched = null; delete r._form; touch(r); }
-  M.modal = null; mRender(); refreshReceiver(); focusWin(widget());
-  toast('06:00 น. — ประกาศถึงผู้รับแล้ว ดูได้ที่ Widget บนเดสก์ท็อป');
+// Test links (spec §4): publishing delivers to receivers right away, dated today (no 06:00 wait)
+function deliverNow(r, groups){
+  const a = toArticle(r._form, null);
+  a.date = 'ประกาศ ' + TODAY;
+  if (ONLINE){ r.dbArt = a; r._form = settledForm(r._form); r.sched = null; dbSaveRow(r); }
+  else { ARTICLES.unshift(a); r.aid = a.id; r.sched = null; delete r._form; }
+  touch(r); M.view = 'list'; M.form = null; mRender(); refreshReceiver(); focusWin(widget());
+  toast('เผยแพร่ประกาศแล้ว', {desc:`ส่งถึงผู้รับ ${groups} กลุ่มแล้ว ดูได้ที่ Widget บนเดสก์ท็อป`});
 }
 function saveRow(mstatus){
   const f = M.form; let r = MK.rows.find(x=>x.id===f.rowId);
@@ -561,7 +560,8 @@ function mSubmit(e){
   e.preventDefault(); e.stopPropagation();
   if (e.target.id==='m-search'){ M.q = M.qInput; M.page = 1; return rerender(); }
   if (e.target.id==='m-login'){
-    const id = $('#m-emp').value.trim(), pw = $('#m-pw').value;
+    const role = pickedRole('role-m');
+    const id = role || $('#m-emp').value.trim(), pw = role ? TEST_PW : $('#m-pw').value;
     $('#mf-id').classList.toggle('err', !id); $('#mf-pw').classList.toggle('err', !pw);
     if (!id || !pw) return;
     const b = $('#m-login-btn'); b.innerHTML = '<span class="spin"></span>'; b.disabled = true;
@@ -638,5 +638,4 @@ function mDrag(e){
   if (e.type==='drop' && z.id==='lib-drop'){ const f = [...e.dataTransfer.files].find(f => /image\/(png|jpe?g)/.test(f.type)); if (f){ M.modal.up = {name:f.name, src:URL.createObjectURL(f), status:'อัปเดต', source:'อื่นๆ'}; rerender(); } return; }
   if (e.type==='drop') addUploads([...e.dataTransfer.files].filter(f => /image\/(png|jpe?g)/.test(f.type)).map(f => ({name:f.name, src:URL.createObjectURL(f), file:f})));
 }
-// "Simulate 6:00" lives outside mClick so it can read the saved form snapshot
-document.addEventListener('click', e => { if (e.target.closest('#maker [data-m="deliver"]')) mDeliver(); }, true);
+
